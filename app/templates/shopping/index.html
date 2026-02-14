@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Lists - Meal Planner{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>🛒 Shopping Lists</h1>
+    <div>
+        <a href="{{ url_for('shopping.index', week=prev_week.isoformat()) }}" class="btn btn-outline-secondary btn-sm">← Previous</a>
+        <span class="mx-2">Week of {{ week_start.strftime('%b %d') }}</span>
+        <a href="{{ url_for('shopping.index', week=next_week.isoformat()) }}" class="btn btn-outline-secondary btn-sm">Next →</a>
+    </div>
+</div>
+
+{% if shopping_lists %}
+    <div class="row g-4">
+        {% for list in shopping_lists %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">{{ list.store_name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% set completed = list.items.filter_by(is_checked=True).count() %}
+                        {% set total = list.items.count() %}
+                        <div class="mb-3">
+                            <small class="text-muted">{{ completed }}/{{ total }} items completed</small>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" style="width: {{ (completed/total*100) if total > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('shopping.view', id=list.id) }}" class="btn btn-primary btn-sm">View List</a>
+                            <a href="{{ url_for('shopping.add_item', id=list.id) }}" class="btn btn-outline-secondary btn-sm">+ Add Item</a>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-muted">Created {{ list.created_at.strftime('%m/%d') }}</small>
+                        <form method="POST" action="{{ url_for('shopping.delete_list', id=list.id) }}" style="display: inline; float: right;" onsubmit="return confirm('Delete this list?');">
+                            <button type="submit" class="btn btn-xs btn-outline-danger" style="padding: 2px 6px; font-size: 0.75rem;">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('shopping.create', week=week_start.isoformat()) }}" class="btn btn-primary">+ Create Shopping List</a>
+    </div>
+{% else %}
+    <div class="alert alert-info text-center py-5">
+        <p class="mb-3">No shopping lists for this week.</p>
+        <a href="{{ url_for('shopping.create', week=week_start.isoformat()) }}" class="btn btn-primary">Create Shopping List</a>
+    </div>
+{% endif %}
+{% endblock %}

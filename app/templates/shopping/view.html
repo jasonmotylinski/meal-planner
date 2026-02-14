@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ shopping_list.store_name }} - Meal Planner{% endblock %}
+
+{% block content %}
+<div class="shopping-container">
+    <!-- Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-lg); gap: var(--spacing-md);">
+        <div>
+            <h1 style="margin: 0 0 var(--spacing-xs) 0;">🛒 {{ shopping_list.store_name }}</h1>
+            <p style="color: #666; margin: 0; font-size: 0.875rem;">
+                Week of {{ shopping_list.week_start_date.strftime('%B %d, %Y') }}
+            </p>
+        </div>
+        <a href="{{ url_for('shopping.index', week=shopping_list.week_start_date.isoformat()) }}" class="btn btn-soft" style="white-space: nowrap;">← Back</a>
+    </div>
+
+    <!-- Progress Bar -->
+    {% if items %}
+    <div class="shopping-progress">
+        <div class="progress-bar">
+            <div class="progress-bar-fill" style="width: {{ (completed/total*100) if total > 0 else 0 }}%"></div>
+        </div>
+        <div class="progress-text">{{ completed }} of {{ total }} items</div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    {% if items %}
+    <div style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg); flex-wrap: wrap;">
+        <a href="{{ url_for('shopping.add_item', id=shopping_list.id) }}" class="btn btn-primary">➕ Add Item</a>
+        <a href="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" class="btn btn-secondary">🔄 Generate from Meals</a>
+    </div>
+    {% endif %}
+
+    <!-- Shopping Items -->
+    {% if items %}
+        <div class="shopping-items">
+            {% for item in items %}
+                <div class="shopping-item {% if item.is_checked %}checked{% endif %}">
+                    <input type="checkbox"
+                           class="shopping-checkbox"
+                           data-item-id="{{ item.id }}"
+                           {% if item.is_checked %}checked{% endif %}>
+                    <span class="item-text">{{ item.item_name }}</span>
+                    {% if item.quantity %}
+                        <span class="item-quantity">{{ item.quantity }}{% if item.unit %} {{ item.unit }}{% endif %}</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Clear all checked -->
+        <div style="margin-top: var(--spacing-lg); text-align: center; padding-top: var(--spacing-lg); border-top: 1px solid var(--light-gray);">
+            <small>
+                <a href="{{ url_for('shopping.index', week=shopping_list.week_start_date.isoformat()) }}" style="color: var(--sage-green); text-decoration: none;">
+                    All done? Back to shopping lists ✓
+                </a>
+            </small>
+        </div>
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-state-icon">🛒</div>
+            <h3>No items yet</h3>
+            <p>Add items to your shopping list or generate them from your planned meals.</p>
+            <div style="display: flex; gap: var(--spacing-md); justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('shopping.add_item', id=shopping_list.id) }}" class="btn btn-primary">Add Item</a>
+                <a href="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" class="btn btn-secondary">Generate from Meals</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/shopping.js') }}"></script>
+{% endblock %}

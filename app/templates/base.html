@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Meal Planner{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- External CSS Files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                🍽️ Meal Planner
+            </a>
+            <button class="navbar-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                ☰
+            </button>
+            <ul class="navbar-nav" id="navbarNav">
+                {% if current_user.is_authenticated %}
+                    <li>
+                        <a class="nav-link" href="{{ url_for('main.index') }}">
+                            <span>🏠</span> Home
+                        </a>
+                    </li>
+                    <li>
+                        <a class="nav-link" href="{{ url_for('meals.library') }}">
+                            <span>📖</span> My Recipes
+                        </a>
+                    </li>
+                    {% if current_user.household %}
+                        <li>
+                            <a class="nav-link" href="{{ url_for('planner.index') }}">
+                                <span>📅</span> This Week
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link" href="{{ url_for('shopping.index') }}">
+                                <span>🛒</span> Shopping
+                            </a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-dropdown">
+                        <button class="nav-dropdown-toggle" id="userDropdown" aria-label="User menu">
+                            <span>👤</span> {{ current_user.username }}
+                        </button>
+                        <ul class="nav-dropdown-menu" id="userDropdownMenu">
+                            <li>
+                                <a class="nav-dropdown-item" href="{{ url_for('household.index') }}">
+                                    👥 Household
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-dropdown-item" href="{{ url_for('auth.logout') }}">
+                                    🚪 Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li>
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                    </li>
+                    <li>
+                        <a class="nav-link" href="{{ url_for('auth.register') }}">Register</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Alerts Container -->
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'info' }}">
+                        <span>{{ '✓' if category == 'success' else '✕' if category == 'danger' else 'ℹ' }}</span>
+                        <span>{{ message }}</span>
+                        <button class="alert-close" type="button" aria-label="Close alert">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Meal Planner. Made with ❤️ for home cooks everywhere.</p>
+    </footer>
+
+    <!-- External JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

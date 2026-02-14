@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{{ meal.name }} - Meal Planner{% endblock %}
+
+{% block content %}
+<div class="meal-detail">
+    <!-- Header -->
+    <div class="meal-header">
+        {% if meal.image_filename %}
+            {% if meal.image_filename.startswith('http') %}
+                <img src="{{ meal.image_filename }}" class="meal-image" alt="{{ meal.name }}">
+            {% else %}
+                <img src="{{ url_for('static', filename='uploads/' + meal.image_filename) }}" class="meal-image" alt="{{ meal.name }}">
+            {% endif %}
+        {% else %}
+            <div class="meal-image" style="background: linear-gradient(135deg, var(--light-gray) 0%, #d8d3cc 100%); display: flex; align-items: center; justify-content: center;">
+                <span style="color: #999; font-size: 5rem;">🍽️</span>
+            </div>
+        {% endif %}
+
+        <div class="meal-info">
+            <h1 class="meal-title">{{ meal.name }}</h1>
+            {% if meal.category %}
+                <span style="display: inline-block; background-color: var(--sage-green); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; margin-bottom: var(--spacing-sm);">
+                    📂 {{ meal.category }}
+                </span>
+            {% endif %}
+            {% if meal.description %}
+                <p class="meal-description">{{ meal.description }}</p>
+            {% endif %}
+
+            <div class="meal-actions">
+                {% if is_owner %}
+                    <a href="{{ url_for('meals.edit', id=meal.id) }}" class="btn btn-secondary">✏️ Edit Recipe</a>
+                    <form method="POST" action="{{ url_for('meals.delete', id=meal.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure? This can\'t be undone.');">
+                        <button type="submit" class="btn btn-outline" style="color: var(--terracotta); border-color: var(--terracotta);">🗑️ Delete</button>
+                    </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('meals.toggle_favorite', id=meal.id) }}" style="display: inline;">
+                    <button type="submit" class="btn {% if is_favorite %}btn-secondary{% else %}btn-soft{% endif %}">
+                        {% if is_favorite %}★{% else %}☆{% endif %} {{ 'Favorited' if is_favorite else 'Add to Favorites' }}
+                    </button>
+                </form>
+            </div>
+
+            <small style="color: #888;">
+                Added by <strong>{{ meal.creator.username }}</strong> on {{ meal.created_at.strftime('%B %d, %Y') }}
+                {% if meal.source_url %}
+                    <br>
+                    📎 <a href="{{ meal.source_url }}" target="_blank" rel="noopener noreferrer" style="color: var(--sage-green); text-decoration: none; font-weight: 500;">
+                        Recipe from {{ meal.source_name }}
+                    </a>
+                {% endif %}
+            </small>
+        </div>
+    </div>
+
+    <!-- Ingredients Section -->
+    <section class="ingredients-section">
+        <h4>🥘 Ingredients</h4>
+        <ul class="ingredient-list">
+            {% for ingredient in meal.ingredients.split('\n') if ingredient.strip() %}
+                <li class="ingredient-item">
+                    <input type="checkbox" class="ingredient-checkbox" id="ingredient-{{ loop.index }}">
+                    <label for="ingredient-{{ loop.index }}" class="ingredient-text">{{ ingredient.strip() }}</label>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <!-- Instructions Section -->
+    <section class="instructions-section">
+        <h4>👨‍🍳 Instructions</h4>
+        <div class="instructions">
+            {%- for instruction in meal.instructions.split('\n') if instruction.strip() -%}
+{{ loop.index }}. {{ instruction.strip() }}
+{% if not loop.last %}
+{% endif %}
+            {%- endfor -%}
+        </div>
+    </section>
+
+    <!-- Back Link -->
+    <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--light-gray);">
+        <a href="{{ url_for('meals.library') }}" style="color: var(--sage-green); text-decoration: none; font-weight: 500;">
+            ← Back to Recipe Collection
+        </a>
+    </div>
+</div>
+
+<!-- Quick Add to Meal Plan Section -->
+{% if current_user.household %}
+<section style="margin-top: var(--spacing-xl); padding: var(--spacing-lg); background: linear-gradient(135deg, rgba(135, 168, 120, 0.1) 0%, rgba(244, 162, 97, 0.1) 100%); border-radius: var(--radius-lg); border-left: 4px solid var(--sage-green);">
+    <h3 style="margin-top: 0;">📅 Add to This Week</h3>
+    <p style="color: #666; margin-bottom: var(--spacing-md);">Quickly add this recipe to your meal plan for any day:</p>
+
+    <div class="quick-add-days" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: var(--spacing-sm);">
+        {% for day_date in week_dates %}
+            {% set day_name = day_date.strftime('%a') %}
+            {% set day_num = day_date.strftime('%d') %}
+            {% set is_today = day_date == today %}
+
+            <a href="{{ url_for('planner.set_meal', date_str=day_date.isoformat(), meal_type='dinner', meal_id=meal.id) }}"
+               class="btn {% if is_today %}btn-primary{% else %}btn-soft{% endif %}"
+               style="text-align: center; padding: var(--spacing-md); transition: all 0.2s ease; min-height: 60px; display: flex; flex-direction: column; justify-content: center;"
+               onmouseover="this.style.transform='translateY(-2px)'"
+               onmouseout="this.style.transform='translateY(0)'">
+                <div style="font-weight: 600; font-size: 0.875rem;">{{ day_name }}</div>
+                <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">{{ day_num }}</div>
+            </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

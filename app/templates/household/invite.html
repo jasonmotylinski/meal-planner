@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Invite Partner - Meal Planner{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h1 class="mb-4">Invite Your Partner</h1>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Invite Link</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Share this link with your partner. They can click it to join your household "{{ household.name }}".
+                </p>
+
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="invite-link"
+                           value="{{ url_for('household.join', household_id=household.id, _external=True) }}"
+                           readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard()">
+                        Copy Link
+                    </button>
+                </div>
+
+                <p class="small text-muted mb-0">
+                    Your partner should click this link while logged in to join your household.
+                </p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Share Instructions</h5>
+            </div>
+            <div class="card-body">
+                <ol class="small">
+                    <li>Share the invite link above with your partner</li>
+                    <li>They should have their own account (or create one first)</li>
+                    <li>They click the link while logged in</li>
+                    <li>They'll be added to your household</li>
+                    <li>You'll both see the same meal plans and shopping lists</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="d-grid">
+            <a href="{{ url_for('household.index') }}" class="btn btn-outline-secondary btn-lg">Back</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyToClipboard() {
+        const link = document.getElementById('invite-link');
+        link.select();
+        document.execCommand('copy');
+        alert('Invite link copied to clipboard!');
+    }
+</script>
+{% endblock %}

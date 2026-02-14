@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Create Shopping List - Meal Planner{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Create Shopping List</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <p class="text-muted mb-4">Which store will you shop at this week?</p>
+
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-4">
+                        {{ form.store_name.label(class="form-label") }}
+                        {% if form.store_name.errors %}
+                            {{ form.store_name(class="form-control is-invalid") }}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.store_name.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.store_name(class="form-control form-control-lg", placeholder="e.g., Stop & Shop, Costco, Trader Joe's") }}
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                        <a href="{{ url_for('shopping.index', week=week_start.isoformat()) }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Popular Stores</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <button class="list-group-item list-group-item-action text-start" onclick="document.querySelector('input[name=store_name]').value='Stop & Shop'; return false;">Stop & Shop</button>
+                <button class="list-group-item list-group-item-action text-start" onclick="document.querySelector('input[name=store_name]').value='Costco'; return false;">Costco</button>
+                <button class="list-group-item list-group-item-action text-start" onclick="document.querySelector('input[name=store_name]').value='Trader Joe'\''s'; return false;">Trader Joe's</button>
+                <button class="list-group-item list-group-item-action text-start" onclick="document.querySelector('input[name=store_name]').value='Whole Foods'; return false;">Whole Foods</button>
+                <button class="list-group-item list-group-item-action text-start" onclick="document.querySelector('input[name=store_name]').value='Local Market'; return false;">Local Market</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
