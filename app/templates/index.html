@@ -10,43 +10,18 @@
     {% endif %}
 </div>
 
-<!-- Onboarding Flow for New Users -->
-{% if not current_user.household or 'meals_created' not in session %}
+<!-- Onboarding Flow for New Users (only show if no household yet) -->
+{% if not current_user.household %}
 <section class="onboarding-flow">
     <h2 style="text-align: center; margin-bottom: var(--spacing-lg);">Let's get you started! 🎉</h2>
 
     <!-- Step 1: Create Household -->
-    <div class="onboarding-step {% if not current_user.household %}active{% endif %}">
+    <div class="onboarding-step active">
         <div class="step-number">1</div>
         <div class="step-content">
             <h3>Create a household</h3>
             <p>Start by creating a household (or invite a partner to join yours). This is where all your meal planning happens.</p>
-            {% if current_user.household %}
-                <span style="color: var(--sage-green); font-weight: 600;">✓ Done</span>
-            {% else %}
-                <a href="{{ url_for('household.create') }}" class="btn btn-primary">Set Up Household</a>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Step 2: Start Planning -->
-    <div class="onboarding-step {% if current_user.household and 'meals_created' not in session %}active{% endif %}">
-        <div class="step-number">2</div>
-        <div class="step-content">
-            <h3>Plan this week's meals</h3>
-            <p>Paste recipe URLs directly into the planner. We'll import them automatically and save them to your collection.</p>
-            <a href="{{ url_for('planner.index') }}" class="btn btn-primary" {% if not current_user.household %}style="opacity: 0.5; pointer-events: none;"{% endif %}>Start Planning</a>
-        </div>
-    </div>
-
-    <!-- Step 3: Build Your Recipe Collection -->
-    <div class="onboarding-step {% if current_user.household and 'meals_created' in session %}active{% endif %}">
-        <div class="step-number">3</div>
-        <div class="step-content">
-            <h3>Build your recipe collection</h3>
-            <p>Add custom recipes or import them by URL. Your collection grows as you plan your meals.</p>
-            <a href="{{ url_for('meals.create') }}" class="btn btn-secondary">Create Recipe</a>
-            <a href="{{ url_for('meals.import_recipe') }}" class="btn btn-secondary" style="margin-left: var(--spacing-sm);">Import Recipe</a>
+            <a href="{{ url_for('household.create') }}" class="btn btn-primary">Set Up Household</a>
         </div>
     </div>
 </section>
