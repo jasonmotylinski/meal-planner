@@ -67,6 +67,7 @@ def import_from_url(url, default_user):
             image_filename=recipe_data.get('image_url'),
             source_url=url,
             source_name=extract_domain_name(url),
+            household_id=default_user.household_id,
             created_by=default_user.id
         )
 
@@ -88,6 +89,10 @@ def discover_and_import_recipes():
         default_user = User.query.first()
         if not default_user:
             print("No users found. Create a user first.")
+            return
+
+        if not default_user.household_id:
+            print(f"Default user '{default_user.username}' is not part of a household. Please join a household first.")
             return
 
         total_imported = 0

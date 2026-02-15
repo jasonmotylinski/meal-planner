@@ -24,9 +24,36 @@ class Household(db.Model):
     members = db.relationship('User', backref='household', lazy='dynamic', foreign_keys='User.household_id')
     meal_plans = db.relationship('MealPlan', backref='household', lazy='dynamic', cascade='all, delete-orphan')
     shopping_lists = db.relationship('ShoppingList', backref='household', lazy='dynamic', cascade='all, delete-orphan')
+    invites = db.relationship('HouseholdInvite', backref='household', lazy='dynamic', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Household {self.name}>'
+
+class HouseholdInvite(db.Model):
+    """Secure invite tokens for household membership"""
+    id = db.Column(db.Integer, primary_key=True)
+    household_id = db.Column(db.Integer, db.ForeignKey('household.id'), nullable=False)
+    token = db.Column(db.String(64), unique=True, nullable=False, index=True)  # URL-safe random token
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)  # 7 days from creation
+
+    # One-time use tracking
+    accepted = db.Column(db.Boolean, default=False)
+    accepted_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    accepted_at = db.Column(db.DateTime)
+
+    # Relationships
+    creator = db.relationship('User', foreign_keys=[created_by], backref='invites_sent')
+    acceptor = db.relationship('User', foreign_keys=[accepted_by])
+
+    def is_valid(self):
+        """Check if invite is still valid"""
+        from datetime import datetime
+        return not self.accepted and datetime.utcnow() < self.expires_at
+
+    def __repr__(self):
+        return f'<HouseholdInvite {self.token[:8]}... for {self.household.name}>'
 
 class User(UserMixin, db.Model):
     """User model for authentication"""
@@ -84,6 +111,7 @@ class Meal(db.Model):
     category = db.Column(db.String(50))  # Breakfast, Lunch, Dinner, Side, Dessert, etc.
     source_url = db.Column(db.String(512))  # URL where recipe was imported from
     source_name = db.Column(db.String(255))  # Domain name (e.g., "allrecipes.com")
+    household_id = db.Column(db.Integer, db.ForeignKey('household.id'), nullable=False)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

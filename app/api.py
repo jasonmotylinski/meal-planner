@@ -126,6 +126,10 @@ def create_recipe():
             except:
                 pass
 
+        # Verify user has a household
+        if not request.api_user.household_id:
+            return jsonify({"error": "API user must be part of a household"}), 400
+
         # Create meal
         meal = Meal(
             name=data.get('name', '').strip(),
@@ -136,6 +140,7 @@ def create_recipe():
             image_filename=data.get('image_url'),  # Store URL directly
             source_url=source_url,
             source_name=source_name,
+            household_id=request.api_user.household_id,
             created_by=request.api_user.id
         )
 

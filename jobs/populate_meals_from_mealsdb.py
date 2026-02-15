@@ -57,6 +57,10 @@ def populate_meals_from_mealsdb():
             print("No users found. Create a user first.")
             return
 
+        if not default_user.household_id:
+            print(f"Default user '{default_user.username}' is not part of a household. Please join a household first.")
+            return
+
         # List of categories to fetch
         categories = [
             'Seafood', 'Breakfast', 'Pasta', 'Dessert', 'Chicken',
@@ -101,6 +105,7 @@ def populate_meals_from_mealsdb():
                     ingredients=ingredients,
                     instructions=instructions,
                     image_filename=meal_image,  # Store URL directly
+                    household_id=default_user.household_id,
                     created_by=default_user.id
                 )
 

@@ -146,6 +146,7 @@ def set_meal(date_str, meal_type):
                         image_filename=recipe_data.get('image_url'),
                         source_url=url_input,
                         source_name=extract_domain_name(url_input),
+                        household_id=current_user.household_id,
                         created_by=current_user.id
                     )
                     db.session.add(meal)

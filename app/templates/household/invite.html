@@ -1,63 +1,115 @@
 {% extends "base.html" %}
 
-{% block title %}Invite Partner - Meal Planner{% endblock %}
+{% block title %}Invite Members - Meal Planner{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h1 class="mb-4">Invite Your Partner</h1>
+<div style="max-width: 700px; margin: 0 auto; padding: var(--spacing-xl);">
+    <!-- Header -->
+    <div style="margin-bottom: var(--spacing-xl);">
+        <h1 style="margin: 0 0 var(--spacing-sm) 0;">👥 Invite Members</h1>
+        <p style="color: #666; margin: 0;">Add people to household: <strong>{{ household.name }}</strong></p>
+    </div>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Invite Link</h5>
+    <!-- Generate New Invite -->
+    <div class="card" style="margin-bottom: var(--spacing-lg);">
+        <div style="background: linear-gradient(135deg, var(--sage-green) 0%, var(--honey-gold) 100%); color: white; padding: var(--spacing-lg);">
+            <h3 style="margin: 0;">🔗 Create New Invite Link</h3>
+        </div>
+        <div style="padding: var(--spacing-lg);">
+            <form method="POST" style="display: flex; gap: var(--spacing-sm);">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    Generate Secure Link
+                </button>
+            </form>
+            <p style="color: #666; font-size: 0.875rem; margin-top: var(--spacing-md); margin-bottom: 0;">
+                ✓ Generates a random, unguessable token<br>
+                ✓ Expires in 7 days<br>
+                ✓ One-time use only
+            </p>
+        </div>
+    </div>
+
+    <!-- Active Invites -->
+    {% if active_invites %}
+        <div class="card">
+            <div style="background: linear-gradient(135deg, var(--honey-gold) 0%, var(--terracotta) 100%); color: white; padding: var(--spacing-lg);">
+                <h3 style="margin: 0;">📋 Active Invites</h3>
             </div>
-            <div class="card-body">
-                <p class="text-muted mb-3">
-                    Share this link with your partner. They can click it to join your household "{{ household.name }}".
-                </p>
+            <div style="padding: var(--spacing-lg);">
+                {% for invite in active_invites %}
+                    <div style="padding: var(--spacing-md); background: #f8f5f0; border-radius: var(--radius-md); margin-bottom: var(--spacing-sm); border-left: 4px solid var(--sage-green);">
+                        <!-- Invite Link -->
+                        <div style="margin-bottom: var(--spacing-sm);">
+                            <small style="color: #666; display: block; margin-bottom: 0.5rem;">Invite Link:</small>
+                            <div style="display: flex; gap: var(--spacing-sm);">
+                                <input type="text" class="form-control" style="flex: 1; padding: 8px 12px; font-size: 0.875rem; font-family: monospace;"
+                                       value="{{ url_for('household.join', token=invite.token, _external=True) }}"
+                                       readonly
+                                       onclick="this.select(); document.execCommand('copy');">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="copyToClipboard(this)">
+                                    📋 Copy
+                                </button>
+                            </div>
+                        </div>
 
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="invite-link"
-                           value="{{ url_for('household.join', household_id=household.id, _external=True) }}"
-                           readonly>
-                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard()">
-                        Copy Link
-                    </button>
-                </div>
-
-                <p class="small text-muted mb-0">
-                    Your partner should click this link while logged in to join your household.
-                </p>
+                        <!-- Status -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; color: #666;">
+                            <div>
+                                Created: {{ invite.created_at.strftime('%b %d') }}<br>
+                                Expires: {{ invite.expires_at.strftime('%b %d at %I:%M %p') }}
+                            </div>
+                            <form method="POST" action="{{ url_for('household.revoke_invite', token=invite.token) }}" style="display: inline;" onsubmit="return confirm('Revoke this invite?');">
+                                <button type="submit" class="btn btn-sm btn-outline" style="color: var(--terracotta); border-color: var(--terracotta);">
+                                    Revoke
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         </div>
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Share Instructions</h5>
-            </div>
-            <div class="card-body">
-                <ol class="small">
-                    <li>Share the invite link above with your partner</li>
-                    <li>They should have their own account (or create one first)</li>
-                    <li>They click the link while logged in</li>
-                    <li>They'll be added to your household</li>
-                    <li>You'll both see the same meal plans and shopping lists</li>
-                </ol>
-            </div>
+    {% else %}
+        <div style="text-align: center; padding: var(--spacing-xl); background: linear-gradient(135deg, rgba(135, 168, 120, 0.1) 0%, rgba(244, 162, 97, 0.1) 100%); border-radius: var(--radius-lg); margin-bottom: var(--spacing-lg);">
+            <p style="color: #666; margin: 0;">No active invites. Click "Generate Secure Link" above to create one.</p>
         </div>
+    {% endif %}
 
-        <div class="d-grid">
-            <a href="{{ url_for('household.index') }}" class="btn btn-outline-secondary btn-lg">Back</a>
+    <!-- Instructions -->
+    <div class="card" style="margin-top: var(--spacing-lg);">
+        <div style="background: rgba(135, 168, 120, 0.1); padding: var(--spacing-lg); border-radius: var(--radius-lg);">
+            <h4 style="margin-top: 0;">📖 How It Works</h4>
+            <ol style="margin: var(--spacing-md) 0 0 0; padding-left: 1.5rem; color: #666; font-size: 0.875rem;">
+                <li>Click "Generate Secure Link" to create a new invite</li>
+                <li>Copy the link and share it with the person you want to invite</li>
+                <li>They click the link (while logged in) and confirm joining</li>
+                <li>They're added to your household</li>
+                <li>You'll both see the same meal plans and shopping lists</li>
+            </ol>
+            <p style="color: #666; font-size: 0.875rem; margin-top: var(--spacing-md);">
+                <strong>Security:</strong> Each link is random and unguessable. Links expire in 7 days and can only be used once.
+            </p>
         </div>
+    </div>
+
+    <!-- Back Button -->
+    <div style="margin-top: var(--spacing-lg);">
+        <a href="{{ url_for('household.index') }}" class="btn btn-soft" style="width: 100%; text-align: center;">
+            ← Back to Household
+        </a>
     </div>
 </div>
 
 <script>
-    function copyToClipboard() {
-        const link = document.getElementById('invite-link');
-        link.select();
+    function copyToClipboard(button) {
+        const input = button.previousElementSibling;
+        input.select();
         document.execCommand('copy');
-        alert('Invite link copied to clipboard!');
+
+        const originalText = button.textContent;
+        button.textContent = '✓ Copied!';
+        setTimeout(() => {
+            button.textContent = originalText;
+        }, 2000);
     }
 </script>
 {% endblock %}

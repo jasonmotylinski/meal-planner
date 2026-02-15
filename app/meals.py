@@ -12,11 +12,14 @@ meals_bp = Blueprint('meals', __name__, url_prefix='/meals')
 @login_required
 def library():
     """View meal library with search and filter"""
+    if not current_user.household:
+        return redirect(url_for('household.create'))
+
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '', type=str)
     category = request.args.get('category', '', type=str)
 
-    query = Meal.query
+    query = Meal.query.filter_by(household_id=current_user.household_id)
 
     if search:
         query = query.filter(Meal.name.ilike(f'%{search}%') | Meal.description.ilike(f'%{search}%'))
@@ -26,8 +29,11 @@ def library():
 
     meals = query.order_by(Meal.created_at.desc()).paginate(page=page, per_page=12)
 
-    # Get all available categories for filter UI
-    available_categories = db.session.query(Meal.category).distinct().filter(Meal.category.isnot(None)).all()
+    # Get all available categories for filter UI (scoped to household)
+    available_categories = db.session.query(Meal.category).distinct().filter(
+        Meal.household_id == current_user.household_id,
+        Meal.category.isnot(None)
+    ).all()
     available_categories = sorted([c[0] for c in available_categories if c[0]])
 
     # Get pending imports from this household
@@ -52,6 +58,9 @@ def favorites():
 @login_required
 def create():
     """Create a new meal"""
+    if not current_user.household:
+        return redirect(url_for('household.create'))
+
     form = MealForm()
     if form.validate_on_submit():
         image_filename = None
@@ -65,6 +74,7 @@ def create():
             ingredients=form.ingredients.data,
             instructions=form.instructions.data,
             image_filename=image_filename,
+            household_id=current_user.household_id,
             created_by=current_user.id
         )
         db.session.add(meal)
@@ -106,6 +116,7 @@ def import_recipe():
                     image_filename=image_filename,
                     source_url=url,
                     source_name=extract_domain_name(url),
+                    household_id=current_user.household_id,
                     created_by=current_user.id
                 )
 
@@ -146,7 +157,10 @@ def import_recipe():
 @login_required
 def view(id):
     """View a single meal"""
-    meal = Meal.query.get_or_404(id)
+    if not current_user.household:
+        return redirect(url_for('household.create'))
+
+    meal = Meal.query.filter_by(id=id, household_id=current_user.household_id).first_or_404()
     is_favorite = current_user.favorites.filter(meal_favorites.c.meal_id == id).first() is not None
     is_owner = meal.created_by == current_user.id
 
@@ -161,7 +175,10 @@ def view(id):
 @login_required
 def edit(id):
     """Edit a meal"""
-    meal = Meal.query.get_or_404(id)
+    if not current_user.household:
+        return redirect(url_for('household.create'))
+
+    meal = Meal.query.filter_by(id=id, household_id=current_user.household_id).first_or_404()
 
     if meal.created_by != current_user.id:
         abort(403)
@@ -195,7 +212,10 @@ def edit(id):
 @login_required
 def delete(id):
     """Delete a meal"""
-    meal = Meal.query.get_or_404(id)
+    if not current_user.household:
+        return redirect(url_for('household.create'))
+
+    meal = Meal.query.filter_by(id=id, household_id=current_user.household_id).first_or_404()
 
     if meal.created_by != current_user.id:
         abort(403)
@@ -210,7 +230,10 @@ def delete(id):
 @login_required
 def toggle_favorite(id):
     """Add or remove meal from favorites"""
-    meal = Meal.query.get_or_404(id)
+    if not current_user.household:
+        return redirect(url_for('household.create'))
+
+    meal = Meal.query.filter_by(id=id, household_id=current_user.household_id).first_or_404()
     is_favorite = current_user.favorites.filter(meal_favorites.c.meal_id == id).first() is not None
 
     if is_favorite:

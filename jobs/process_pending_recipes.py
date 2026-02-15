@@ -240,6 +240,7 @@ def process_pending_recipes():
                     image_filename=image_url or None,
                     source_url=meal_plan.source_url,
                     source_name=extract_domain_name(meal_plan.source_url),
+                    household_id=meal_plan.household_id,
                     created_by=meal_plan.household.created_by  # Attribute to household creator
                 )
 

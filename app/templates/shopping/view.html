@@ -26,7 +26,8 @@
     {% if items %}
     <div style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg); flex-wrap: wrap;">
         <a href="{{ url_for('shopping.add_item', id=shopping_list.id) }}" class="btn btn-primary">➕ Add Item</a>
-        <form method="POST" action="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" style="display: inline;">
+        <!-- Generate from Meals - Hidden for now, functionality preserved -->
+        <form method="POST" action="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" style="display: none;">
             <button type="submit" class="btn btn-secondary">🔄 Generate from Meals</button>
         </form>
     </div>
@@ -73,10 +74,11 @@
         <div class="empty-state">
             <div class="empty-state-icon">🛒</div>
             <h3>No items yet</h3>
-            <p>Add items to your shopping list or generate them from your planned meals.</p>
+            <p>Add items to your shopping list.</p>
             <div style="display: flex; gap: var(--spacing-md); justify-content: center; flex-wrap: wrap;">
                 <a href="{{ url_for('shopping.add_item', id=shopping_list.id) }}" class="btn btn-primary">Add Item</a>
-                <form method="POST" action="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" style="display: inline;">
+                <!-- Generate from Meals - Hidden for now, functionality preserved -->
+                <form method="POST" action="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" style="display: none;">
                     <button type="submit" class="btn btn-secondary">Generate from Meals</button>
                 </form>
             </div>
