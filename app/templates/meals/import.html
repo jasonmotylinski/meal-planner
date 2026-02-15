@@ -39,6 +39,12 @@
                 </p>
             </div>
 
+            <div style="margin-top: var(--spacing-lg); padding-top: var(--spacing-lg); border-top: 1px solid var(--light-gray); text-align: center;">
+                <p style="margin: 0 0 var(--spacing-sm) 0; color: #666; font-size: 0.875rem;">
+                    Can't find a URL? <a href="{{ url_for('meals.create') }}" style="color: var(--terracotta); font-weight: 500; text-decoration: none;">Create recipe manually</a>
+                </p>
+            </div>
+
             <div style="text-align: center; margin-top: var(--spacing-lg);">
                 <a href="{{ url_for('meals.library') }}" style="color: var(--sage-green); text-decoration: none; font-weight: 500;">
                     ← Back to Recipe Collection

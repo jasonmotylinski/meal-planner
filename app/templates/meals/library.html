@@ -51,6 +51,30 @@
 </div>
 {% endif %}
 
+<!-- Pending Imports Section -->
+{% if pending_imports %}
+    <div style="margin-bottom: var(--spacing-xl);">
+        <h3 style="margin: var(--spacing-lg) 0 var(--spacing-md) 0; color: var(--honey-gold); font-weight: 600;">⏳ Recipes Being Imported</h3>
+        <div class="recipe-grid">
+            {% for import_item in pending_imports %}
+                <div class="recipe-card"
+                     style="background: linear-gradient(135deg, rgba(244, 162, 97, 0.2) 0%, rgba(135, 168, 120, 0.2) 100%); border: 2px dashed var(--honey-gold); cursor: default; opacity: 0.8;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; z-index: 2;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">⏳</div>
+                            <div style="font-weight: 600; color: var(--honey-gold);">Importing...</div>
+                        </div>
+                    </div>
+                    <div class="recipe-card-content" style="opacity: 0.5;">
+                        <div class="recipe-card-title">{{ import_item.custom_entry }}</div>
+                        <div class="recipe-card-description">From {{ import_item.source_url.split('/')[2] if import_item.source_url else 'URL' }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
 <!-- Recipe Grid -->
 {% if meals.items %}
     <div class="recipe-grid">

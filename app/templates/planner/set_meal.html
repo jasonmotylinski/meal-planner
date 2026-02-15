@@ -47,14 +47,44 @@
                     </div>
                 </div>
 
-                <!-- SECONDARY: Choose from Library -->
+                <!-- SECONDARY: Smart Search + Quick Access -->
                 <div class="form-group">
                     <label class="form-label" style="font-weight: 500; opacity: 0.9;">
                         Choose from Your Recipes
                     </label>
-                    {{ form.meal_id(class="form-control", style="min-height: 45px; opacity: 0.85;") }}
-                    <small class="form-help">Pick a recipe you've created or imported before</small>
+
+                    <!-- Quick Access: Recent Meals -->
+                    {% if recent_meals %}
+                        <div style="margin-bottom: var(--spacing-md);">
+                            <small style="color: #999; display: block; margin-bottom: var(--spacing-sm); font-weight: 500;">🔥 Recent meals</small>
+                            <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm);">
+                                {% for meal in recent_meals %}
+                                    <button type="button" class="meal-quick-pick"
+                                            onclick="selectQuickMeal(event, {{ meal.id }}, '{{ meal.name }}')">
+                                        {{ meal.name[:20] }}{% if meal.name|length > 20 %}...{% endif %}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Search Field -->
+                    <div style="position: relative;">
+                        <input type="text" id="meal-search" class="form-control"
+                               placeholder="Search your recipes..."
+                               style="padding: 12px 15px; font-size: 1rem; min-height: 48px;"
+                               oninput="searchMeals(this.value)">
+
+                        <!-- Live Results Dropdown -->
+                        <div id="search-results" class="meal-search-results" style="display: none;">
+                        </div>
+                    </div>
+
+                    <small class="form-help">Type to search or click a recent recipe above</small>
                 </div>
+
+                <!-- Hidden meal_id field (populated by selection) -->
+                {{ form.meal_id(style="display: none;") }}
 
                 <!-- Divider -->
                 <div style="text-align: center; margin: var(--spacing-lg) 0; color: #999; font-style: italic;">
@@ -95,4 +125,125 @@
         </ul>
     </div>
 </div>
+
+<style>
+.meal-quick-pick {
+    background: linear-gradient(135deg, var(--honey-gold) 0%, var(--terracotta) 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.meal-quick-pick:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(224, 122, 95, 0.3);
+}
+
+.meal-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--light-gray);
+    border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.meal-search-result {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--light-gray);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.meal-search-result:last-child {
+    border-bottom: none;
+}
+
+.meal-search-result:hover {
+    background: #f8f5f0;
+}
+
+.meal-result-name {
+    font-weight: 500;
+    color: var(--charcoal);
+    font-size: 0.95rem;
+}
+
+.meal-result-meta {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 0.25rem;
+}
+</style>
+
+<script>
+function selectQuickMeal(event, mealId, mealName) {
+    event.preventDefault();
+    document.querySelector('select[name="meal_id"]').value = mealId;
+    document.querySelector('#meal-search').value = mealName;
+    document.querySelector('#search-results').style.display = 'none';
+    // Clear the URL field if it was filled
+    document.querySelector('input[name="url"]').value = '';
+}
+
+function searchMeals(query) {
+    const resultsDiv = document.querySelector('#search-results');
+
+    if (!query.trim() || query.length < 2) {
+        resultsDiv.style.display = 'none';
+        return;
+    }
+
+    fetch(`{{ url_for('planner.search_meals') }}?q=${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(meals => {
+            if (meals.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div style="padding: var(--spacing-md); text-align: center; color: #999;">
+                        No recipes found matching "${query}"
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML = meals.map(meal => `
+                    <div class="meal-search-result" onclick="selectQuickMeal(event, ${meal.id}, '${meal.name}')">
+                        <div class="meal-result-name">${meal.name}</div>
+                        <div class="meal-result-meta">${meal.category}</div>
+                    </div>
+                `).join('');
+            }
+            resultsDiv.style.display = 'block';
+        });
+}
+
+// Close search results when clicking outside
+document.addEventListener('click', function(event) {
+    const searchInput = document.querySelector('#meal-search');
+    const resultsDiv = document.querySelector('#search-results');
+    if (searchInput && resultsDiv && !searchInput.contains(event.target) && !resultsDiv.contains(event.target)) {
+        resultsDiv.style.display = 'none';
+    }
+});
+
+// Close results on Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        document.querySelector('#search-results').style.display = 'none';
+    }
+});
+</script>
 {% endblock %}

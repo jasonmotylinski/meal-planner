@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, date
 from app.models import MealPlan, Meal, db
 from app.forms import MealPlanForm
 from app.recipe_importer import import_recipe_from_url, extract_domain_name
+import json
 
 planner_bp = Blueprint('planner', __name__, url_prefix='/planner')
 
@@ -131,14 +132,15 @@ def set_meal(date_str, meal_type):
 
         if url_input:
             try:
-                # Attempt to import recipe from URL
+                # Try fast schema.org parsing first (instant)
                 recipe_data = import_recipe_from_url(url_input)
 
                 if recipe_data:
-                    # SUCCESS: Create Meal record + link to MealPlan
+                    # SUCCESS: Schema.org data found, create Meal immediately
                     meal = Meal(
                         name=recipe_data['name'],
                         description=recipe_data.get('description', ''),
+                        category=recipe_data.get('category'),
                         ingredients=recipe_data['ingredients'],
                         instructions=recipe_data['instructions'],
                         image_filename=recipe_data.get('image_url'),
@@ -151,28 +153,31 @@ def set_meal(date_str, meal_type):
 
                     meal_plan.meal_id = meal.id
                     meal_plan.source_url = url_input
+                    meal_plan.import_status = 'imported'
                     meal_plan.custom_entry = None
                     db.session.add(meal_plan)
                     db.session.commit()
                     flash(f'✓ Recipe "{meal.name}" imported and added to {meal_type.title()}', 'success')
                 else:
-                    # FAILURE: No recipe found, but save URL for reference
+                    # No schema.org data: Queue for async Claude processing
                     domain = extract_domain_name(url_input)
-                    meal_plan.custom_entry = f"Recipe from {domain}"
                     meal_plan.source_url = url_input
+                    meal_plan.import_status = 'pending'  # Cron job will process this
                     meal_plan.meal_id = None
+                    meal_plan.custom_entry = f"Recipe from {domain}"
                     db.session.add(meal_plan)
                     db.session.commit()
-                    flash(f'⚠ Could not import recipe from {domain}, but saved the URL', 'warning')
+                    flash(f'⏳ Recipe from {domain} saved! Details will be imported shortly...', 'info')
 
             except Exception as e:
-                # NETWORK/HTTP ERROR: Save URL anyway
-                meal_plan.custom_entry = f"Recipe from URL"
+                # NETWORK/HTTP ERROR: Queue for async retry
                 meal_plan.source_url = url_input
+                meal_plan.import_status = 'pending'  # Cron job will retry
                 meal_plan.meal_id = None
+                meal_plan.custom_entry = 'Recipe from URL'
                 db.session.add(meal_plan)
                 db.session.commit()
-                flash('⚠ Could not reach that URL, but saved it for reference', 'warning')
+                flash('⏳ Saved URL for later processing. Will retry shortly...', 'info')
 
         # SECONDARY: Set either meal or custom entry
         elif form.meal_id.data and form.meal_id.data != 0:
@@ -214,10 +219,14 @@ def set_meal(date_str, meal_type):
         else:
             form.custom_entry.data = existing.custom_entry
 
+    # Get recent meals for quick access
+    recent_meals = Meal.query.order_by(Meal.created_at.desc()).limit(6).all()
+
     return render_template('planner/set_meal.html',
                          form=form,
                          date=target_date,
-                         meal_type=meal_type)
+                         meal_type=meal_type,
+                         recent_meals=recent_meals)
 
 @planner_bp.route('/<date_str>/<meal_type>/delete', methods=['POST'])
 @login_required
@@ -243,3 +252,23 @@ def delete_meal(date_str, meal_type):
         flash('Meal removed', 'info')
 
     return redirect(request.referrer or url_for('planner.index'))
+
+@planner_bp.route('/search', methods=['GET'])
+@login_required
+def search_meals():
+    """Search meals by query string"""
+    query = request.args.get('q', '').strip()
+
+    if not query or len(query) < 2:
+        return jsonify([])
+
+    # Search in meal name and description
+    meals = Meal.query.filter(
+        (Meal.name.ilike(f'%{query}%')) | (Meal.description.ilike(f'%{query}%'))
+    ).limit(10).all()
+
+    return jsonify([{
+        'id': meal.id,
+        'name': meal.name,
+        'category': meal.category or 'Uncategorized'
+    } for meal in meals])

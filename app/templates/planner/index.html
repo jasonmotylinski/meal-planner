@@ -73,8 +73,19 @@
                 {% endif %}
             </div>
 
-            <!-- Description & Source -->
+            <!-- Status & Description -->
             {% if meal_plan %}
+                <!-- Import Status Indicator -->
+                {% if meal_plan.import_status == 'pending' %}
+                    <small style="display: block; margin-top: 0.5rem; color: var(--honey-gold); font-weight: 600;">
+                        ⏳ Importing recipe details...
+                    </small>
+                {% elif meal_plan.import_status == 'failed' %}
+                    <small style="display: block; margin-top: 0.5rem; color: var(--terracotta); font-weight: 600;">
+                        ⚠️ Import failed - <a href="{{ meal_plan.source_url }}" target="_blank" style="color: var(--terracotta); text-decoration: underline;">view URL</a>
+                    </small>
+                {% endif %}
+
                 {% if meal_plan.meal and meal_plan.meal.description %}
                     <p style="margin: var(--spacing-sm) 0 0 0; font-size: 0.875rem; color: #666;">
                         {{ meal_plan.meal.description[:60] }}...
@@ -89,7 +100,7 @@
                             📎 {{ meal_plan.meal.source_name or 'View recipe' }}
                         </a>
                     </small>
-                {% elif meal_plan.source_url %}
+                {% elif meal_plan.source_url and meal_plan.import_status != 'pending' %}
                     <small style="display: block; margin-top: 0.5rem;">
                         <a href="{{ meal_plan.source_url }}" target="_blank" rel="noopener"
                            style="color: var(--sage-green); text-decoration: none; font-size: 0.75rem;">

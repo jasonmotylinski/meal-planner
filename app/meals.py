@@ -30,7 +30,15 @@ def library():
     available_categories = db.session.query(Meal.category).distinct().filter(Meal.category.isnot(None)).all()
     available_categories = sorted([c[0] for c in available_categories if c[0]])
 
-    return render_template('meals/library.html', meals=meals, search=search, category=category, available_categories=available_categories)
+    # Get pending imports from this household
+    from app.models import MealPlan
+    pending_imports = MealPlan.query.filter_by(
+        household_id=current_user.household_id,
+        import_status='pending'
+    ).all()
+
+    return render_template('meals/library.html', meals=meals, search=search, category=category,
+                         available_categories=available_categories, pending_imports=pending_imports)
 
 @meals_bp.route('/favorites')
 @login_required
@@ -70,46 +78,66 @@ def create():
 @login_required
 def import_recipe():
     """Import a recipe from a URL"""
+    from app.models import MealPlan
+
     form = RecipeImportForm()
 
     if form.validate_on_submit():
         url = form.url.data
 
         try:
-            # Extract recipe from URL
-            flash('🔄 Fetching recipe from URL...', 'info')
+            # Try fast schema.org parsing first (instant)
             recipe_data = import_recipe_from_url(url)
 
-            if not recipe_data:
-                flash('Could not extract recipe from that URL. Try manually adding it instead.', 'warning')
-                return render_template('meals/import.html', form=form)
+            if recipe_data:
+                # SUCCESS: Schema.org data found, create Meal immediately
+                # Download image if available
+                image_filename = None
+                if recipe_data.get('image_url'):
+                    image_filename = save_picture_from_url(recipe_data['image_url'])
 
-            # Download image if available
-            image_filename = None
-            if recipe_data.get('image_url'):
-                image_filename = save_picture_from_url(recipe_data['image_url'])
+                # Create meal with imported data
+                meal = Meal(
+                    name=recipe_data.get('name', 'Imported Recipe'),
+                    description=recipe_data.get('description', ''),
+                    category=recipe_data.get('category'),
+                    ingredients=recipe_data.get('ingredients', ''),
+                    instructions=recipe_data.get('instructions', ''),
+                    image_filename=image_filename,
+                    source_url=url,
+                    source_name=extract_domain_name(url),
+                    created_by=current_user.id
+                )
 
-            # Create meal with imported data
-            meal = Meal(
-                name=recipe_data.get('name', 'Imported Recipe'),
-                description=recipe_data.get('description', ''),
-                category=recipe_data.get('category'),  # Some recipes may have category
-                ingredients=recipe_data.get('ingredients', ''),
-                instructions=recipe_data.get('instructions', ''),
-                image_filename=image_filename,
-                source_url=url,
-                source_name=extract_domain_name(url),
-                created_by=current_user.id
-            )
+                db.session.add(meal)
+                db.session.commit()
 
-            db.session.add(meal)
-            db.session.commit()
+                flash('✨ Recipe imported successfully!', 'success')
+                return redirect(url_for('meals.view', id=meal.id))
+            else:
+                # FAILURE: No schema.org data, queue for async Claude processing
+                domain = extract_domain_name(url)
 
-            flash('✨ Recipe imported successfully!', 'success')
-            return redirect(url_for('meals.view', id=meal.id))
+                # Queue for async processing via MealPlan (background job will create the Meal)
+                # Don't create a placeholder - let the background job create the complete Meal
+                from datetime import date
+                pending_plan = MealPlan(
+                    household_id=current_user.household_id,
+                    date=date.today(),
+                    meal_type='dinner',
+                    source_url=url,
+                    import_status='pending',
+                    custom_entry=f'From {domain}'
+                )
+
+                db.session.add(pending_plan)
+                db.session.commit()
+
+                flash(f'⏳ Recipe from {domain} saved! We\'re importing the details and will add it to your library shortly.', 'info')
+                return redirect(url_for('meals.library'))
 
         except Exception as e:
-            flash(f'Error importing recipe: {str(e)}', 'error')
+            flash(f'Error importing recipe: {str(e)}', 'warning')
             return render_template('meals/import.html', form=form)
 
     return render_template('meals/import.html', form=form)

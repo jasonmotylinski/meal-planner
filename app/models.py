@@ -103,7 +103,8 @@ class MealPlan(db.Model):
     meal_type = db.Column(db.String(20), nullable=False)  # breakfast, lunch, dinner
     meal_id = db.Column(db.Integer, db.ForeignKey('meal.id'))
     custom_entry = db.Column(db.String(255))  # For "Leftovers", "Out to eat", etc.
-    source_url = db.Column(db.String(512))  # Tracks URL even if import fails
+    source_url = db.Column(db.String(512))  # Tracks URL for import
+    import_status = db.Column(db.String(20), default='imported')  # imported, pending, failed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

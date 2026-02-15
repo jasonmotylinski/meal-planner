@@ -10,6 +10,9 @@ class Config:
     SQLALCHEMY_DATABASE_URI = 'sqlite:///meal_planner.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # API Keys
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
+
     # Upload settings
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     UPLOAD_FOLDER = 'uploads'
