@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, timedelta, date
 from app.models import MealPlan, Meal, db
 from app.forms import MealPlanForm
+from app.recipe_importer import import_recipe_from_url, extract_domain_name
 
 planner_bp = Blueprint('planner', __name__, url_prefix='/planner')
 
@@ -125,24 +126,77 @@ def set_meal(date_str, meal_type):
                 meal_type=meal_type
             )
 
-        # Set either meal or custom entry
-        if form.meal_id.data and form.meal_id.data != 0:
+        # PRIMARY: Handle URL import
+        url_input = request.form.get('url', '').strip()
+
+        if url_input:
+            try:
+                # Attempt to import recipe from URL
+                recipe_data = import_recipe_from_url(url_input)
+
+                if recipe_data:
+                    # SUCCESS: Create Meal record + link to MealPlan
+                    meal = Meal(
+                        name=recipe_data['name'],
+                        description=recipe_data.get('description', ''),
+                        ingredients=recipe_data['ingredients'],
+                        instructions=recipe_data['instructions'],
+                        image_filename=recipe_data.get('image_url'),
+                        source_url=url_input,
+                        source_name=extract_domain_name(url_input),
+                        created_by=current_user.id
+                    )
+                    db.session.add(meal)
+                    db.session.flush()  # Get meal.id
+
+                    meal_plan.meal_id = meal.id
+                    meal_plan.source_url = url_input
+                    meal_plan.custom_entry = None
+                    db.session.add(meal_plan)
+                    db.session.commit()
+                    flash(f'✓ Recipe "{meal.name}" imported and added to {meal_type.title()}', 'success')
+                else:
+                    # FAILURE: No recipe found, but save URL for reference
+                    domain = extract_domain_name(url_input)
+                    meal_plan.custom_entry = f"Recipe from {domain}"
+                    meal_plan.source_url = url_input
+                    meal_plan.meal_id = None
+                    db.session.add(meal_plan)
+                    db.session.commit()
+                    flash(f'⚠ Could not import recipe from {domain}, but saved the URL', 'warning')
+
+            except Exception as e:
+                # NETWORK/HTTP ERROR: Save URL anyway
+                meal_plan.custom_entry = f"Recipe from URL"
+                meal_plan.source_url = url_input
+                meal_plan.meal_id = None
+                db.session.add(meal_plan)
+                db.session.commit()
+                flash('⚠ Could not reach that URL, but saved it for reference', 'warning')
+
+        # SECONDARY: Set either meal or custom entry
+        elif form.meal_id.data and form.meal_id.data != 0:
             meal_plan.meal_id = form.meal_id.data
             meal_plan.custom_entry = None
+            meal_plan.source_url = None
+            db.session.add(meal_plan)
+            db.session.commit()
+            flash('Meal updated successfully!', 'success')
         elif form.custom_entry.data:
             meal_plan.meal_id = None
             meal_plan.custom_entry = form.custom_entry.data
+            meal_plan.source_url = None
+            db.session.add(meal_plan)
+            db.session.commit()
+            flash('Meal updated successfully!', 'success')
         else:
-            # Delete if neither meal nor custom entry
+            # Delete if neither meal nor custom entry nor URL
             if meal_plan.id:
                 db.session.delete(meal_plan)
             db.session.commit()
             flash('Meal removed', 'info')
             return redirect(request.referrer or url_for('planner.index'))
 
-        db.session.add(meal_plan)
-        db.session.commit()
-        flash('Meal updated successfully!', 'success')
         # Get the week start for the target date
         week_start = get_week_start(target_date)
         return redirect(url_for('planner.index', week=week_start.isoformat()))

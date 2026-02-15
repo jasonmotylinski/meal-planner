@@ -5,6 +5,7 @@ Supports structured data (schema.org/Recipe format)
 
 import urllib.request
 import json
+import re
 from urllib.parse import urlparse
 
 

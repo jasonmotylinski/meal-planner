@@ -5,7 +5,7 @@
 {% block content %}
 <!-- Header -->
 <div style="text-align: center; margin-bottom: var(--spacing-xl);">
-    <h1 style="margin: 0 0 var(--spacing-sm) 0;">📅 Plan Dinner</h1>
+    <h1 style="margin: 0 0 var(--spacing-sm) 0;">📅 Plan {{ meal_type.title() }}</h1>
     <p style="color: #666; margin: 0; font-size: 1.125rem;">
         {{ date.strftime('%A, %B %d, %Y') }}
     </p>
@@ -18,23 +18,59 @@
             <form method="POST">
                 {{ form.hidden_tag() }}
 
-                <!-- Select from Library -->
+                <!-- PRIMARY: Paste Recipe URL -->
                 <div class="form-group">
-                    {{ form.meal_id.label("Pick from Your Recipes", class="form-label") }}
-                    {{ form.meal_id(class="form-control", style="min-height: 45px;") }}
-                    <small class="form-help">Your recipe library</small>
+                    <label class="form-label" style="font-weight: 600; font-size: 1.1rem; color: var(--sage-green);">
+                        Paste a Recipe URL
+                    </label>
+                    {% if form.url.errors %}
+                        {{ form.url(class="form-control", style="border-color: #dc3545; padding: 12px 16px; font-size: 1rem;", placeholder="https://www.example.com/recipe") }}
+                        <small class="form-text" style="color: #dc3545;">
+                            {% for error in form.url.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </small>
+                    {% else %}
+                        {{ form.url(class="form-control", style="padding: 12px 16px; font-size: 1rem; border: 2px solid var(--sage-green);", placeholder="https://www.example.com/recipe") }}
+                    {% endif %}
+                    <small class="form-help" style="color: #666; margin-top: 0.5rem;">
+                        💡 We'll import the recipe automatically and save it to your library
+                    </small>
                 </div>
 
                 <!-- Divider -->
-                <div style="text-align: center; margin: var(--spacing-lg) 0; color: #ccc;">
-                    <span style="background: var(--cream); padding: 0 var(--spacing-md); position: relative; z-index: 1;">or</span>
-                    <div style="border-top: 1px solid #ddd; margin-top: -12px;"></div>
+                <div style="text-align: center; margin: var(--spacing-lg) 0; color: #999; font-style: italic;">
+                    <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                        <div style="flex: 1; height: 1px; background: #ddd;"></div>
+                        <span style="padding: 0 var(--spacing-md);">or</span>
+                        <div style="flex: 1; height: 1px; background: #ddd;"></div>
+                    </div>
                 </div>
 
-                <!-- Custom Entry -->
+                <!-- SECONDARY: Choose from Library -->
                 <div class="form-group">
-                    {{ form.custom_entry.label("Something Else", class="form-label") }}
-                    {{ form.custom_entry(class="form-control", placeholder="e.g., Leftovers, Out to eat, Order pizza...") }}
+                    <label class="form-label" style="font-weight: 500; opacity: 0.9;">
+                        Choose from Your Recipes
+                    </label>
+                    {{ form.meal_id(class="form-control", style="min-height: 45px; opacity: 0.85;") }}
+                    <small class="form-help">Pick a recipe you've created or imported before</small>
+                </div>
+
+                <!-- Divider -->
+                <div style="text-align: center; margin: var(--spacing-lg) 0; color: #999; font-style: italic;">
+                    <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                        <div style="flex: 1; height: 1px; background: #ddd;"></div>
+                        <span style="padding: 0 var(--spacing-md);">or</span>
+                        <div style="flex: 1; height: 1px; background: #ddd;"></div>
+                    </div>
+                </div>
+
+                <!-- TERTIARY: Custom Entry -->
+                <div class="form-group">
+                    <label class="form-label" style="font-weight: 500; opacity: 0.8;">
+                        Something Else
+                    </label>
+                    {{ form.custom_entry(class="form-control", style="opacity: 0.8;", placeholder="e.g., Leftovers, Out to eat, Order pizza...") }}
                     <small class="form-help">Enter anything you're planning to cook or eat</small>
                 </div>
 
@@ -48,10 +84,15 @@
     </div>
 
     <!-- Helpful Tips -->
-    <div style="margin-top: var(--spacing-lg); padding: var(--spacing-md); background-color: rgba(244, 162, 97, 0.1); border-left: 4px solid var(--honey-gold); border-radius: var(--radius-md); text-align: center;">
+    <div style="margin-top: var(--spacing-lg); padding: var(--spacing-md); background-color: rgba(135, 168, 120, 0.08); border-left: 4px solid var(--sage-green); border-radius: var(--radius-md);">
         <p style="margin: 0; color: #666; font-size: 0.875rem;">
-            💡 After saving, you'll return to your weekly plan
+            <strong>💡 Quick tips:</strong>
         </p>
+        <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem; font-size: 0.875rem; color: #666;">
+            <li>Paste any recipe URL to auto-import</li>
+            <li>If import fails, we'll save the URL as a reminder</li>
+            <li>After saving, you'll return to your weekly plan</li>
+        </ul>
     </div>
 </div>
 {% endblock %}

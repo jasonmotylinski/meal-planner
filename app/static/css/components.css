@@ -37,7 +37,7 @@
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(224, 122, 95, 0.4);
-    background: linear-gradient(135deg, #d86b52 0%, #c75847 100%);
+    background: linear-gradient(135deg, #f08a6f 0%, #e07a5f 100%);
 }
 
 .btn-primary:active:not(:disabled) {

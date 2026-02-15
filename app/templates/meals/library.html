@@ -8,10 +8,11 @@
     <div>
         <h1 style="margin: 0 0 var(--spacing-xs) 0;">My Recipe Collection</h1>
         <p style="color: #666; margin: 0;">Your personal cookbook</p>
+        <small style="color: #999; margin-top: 0.5rem; display: block;">💡 Tip: You can import recipes directly while planning your week</small>
     </div>
     <div style="display: flex; gap: var(--spacing-md);">
         <a href="{{ url_for('meals.create') }}" class="btn btn-primary btn-lg">➕ Add Recipe</a>
-        <a href="{{ url_for('meals.import_recipe') }}" class="btn btn-secondary btn-lg">🔗 Import</a>
+        <a href="{{ url_for('meals.import_recipe') }}" class="btn btn-soft btn-lg">🔗 Import URL</a>
     </div>
 </div>
 

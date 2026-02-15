@@ -86,6 +86,7 @@ class MealForm(FlaskForm):
 
 class MealPlanForm(FlaskForm):
     """Form for meal planning"""
+    url = URLField('Recipe URL', validators=[Optional(), URL(message='Please enter a valid URL')])
     meal_id = SelectField('Select Meal', coerce=int, validators=[Optional()])
     custom_entry = StringField('Or Custom Entry', validators=[
         Length(max=255, message='Entry must be 255 characters or less')

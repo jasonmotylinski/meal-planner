@@ -37,6 +37,8 @@ def create_app(config_name='development'):
     from app.shopping import shopping_bp
     from app.household import household_bp
     from app.api import api_bp
+    from app.api_keys import api_keys_bp
+    from app.settings import settings_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(meals_bp)
@@ -44,6 +46,8 @@ def create_app(config_name='development'):
     app.register_blueprint(shopping_bp)
     app.register_blueprint(household_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(api_keys_bp)
+    app.register_blueprint(settings_bp)
 
     # Create database tables
     with app.app_context():

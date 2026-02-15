@@ -73,11 +73,30 @@
                 {% endif %}
             </div>
 
-            <!-- Description -->
-            {% if meal_plan and meal_plan.meal and meal_plan.meal.description %}
-                <p style="margin: var(--spacing-sm) 0 0 0; font-size: 0.875rem; color: #666;">
-                    {{ meal_plan.meal.description[:60] }}...
-                </p>
+            <!-- Description & Source -->
+            {% if meal_plan %}
+                {% if meal_plan.meal and meal_plan.meal.description %}
+                    <p style="margin: var(--spacing-sm) 0 0 0; font-size: 0.875rem; color: #666;">
+                        {{ meal_plan.meal.description[:60] }}...
+                    </p>
+                {% endif %}
+
+                <!-- Source URL Link -->
+                {% if meal_plan.meal and meal_plan.meal.source_url %}
+                    <small style="display: block; margin-top: 0.5rem;">
+                        <a href="{{ meal_plan.meal.source_url }}" target="_blank" rel="noopener"
+                           style="color: var(--sage-green); text-decoration: none; font-size: 0.75rem;">
+                            📎 {{ meal_plan.meal.source_name or 'View recipe' }}
+                        </a>
+                    </small>
+                {% elif meal_plan.source_url %}
+                    <small style="display: block; margin-top: 0.5rem;">
+                        <a href="{{ meal_plan.source_url }}" target="_blank" rel="noopener"
+                           style="color: var(--sage-green); text-decoration: none; font-size: 0.75rem;">
+                            🔗 View URL
+                        </a>
+                    </small>
+                {% endif %}
             {% endif %}
         </div>
     {% endfor %}

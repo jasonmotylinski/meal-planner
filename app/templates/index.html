@@ -29,23 +29,24 @@
         </div>
     </div>
 
-    <!-- Step 2: Add First Recipe -->
+    <!-- Step 2: Start Planning -->
     <div class="onboarding-step {% if current_user.household and 'meals_created' not in session %}active{% endif %}">
         <div class="step-number">2</div>
         <div class="step-content">
-            <h3>Add your first recipe</h3>
-            <p>Start building your recipe collection. It takes just a few minutes to add a meal you love.</p>
-            <a href="{{ url_for('meals.create') }}" class="btn btn-primary">Add Recipe</a>
+            <h3>Plan this week's meals</h3>
+            <p>Paste recipe URLs directly into the planner. We'll import them automatically and save them to your collection.</p>
+            <a href="{{ url_for('planner.index') }}" class="btn btn-primary" {% if not current_user.household %}style="opacity: 0.5; pointer-events: none;"{% endif %}>Start Planning</a>
         </div>
     </div>
 
-    <!-- Step 3: Plan Your Week -->
+    <!-- Step 3: Build Your Recipe Collection -->
     <div class="onboarding-step {% if current_user.household and 'meals_created' in session %}active{% endif %}">
         <div class="step-number">3</div>
         <div class="step-content">
-            <h3>Plan this week's meals</h3>
-            <p>Pick recipes from your collection and assign them to days. Then generate your shopping list.</p>
-            <a href="{{ url_for('planner.index') }}" class="btn btn-primary" {% if not current_user.household %}style="opacity: 0.5; pointer-events: none;"{% endif %}>Start Planning</a>
+            <h3>Build your recipe collection</h3>
+            <p>Add custom recipes or import them by URL. Your collection grows as you plan your meals.</p>
+            <a href="{{ url_for('meals.create') }}" class="btn btn-secondary">Create Recipe</a>
+            <a href="{{ url_for('meals.import_recipe') }}" class="btn btn-secondary" style="margin-left: var(--spacing-sm);">Import Recipe</a>
         </div>
     </div>
 </section>
@@ -55,6 +56,32 @@
 
 <!-- Quick Actions -->
 <div class="dashboard-grid">
+    {% if current_user.household %}
+    <div class="quick-action hover-lift" style="border: 2px solid var(--sage-green); box-shadow: 0 4px 12px rgba(135, 168, 120, 0.15);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 0.25rem 0; color: var(--sage-green);">📅 Plan This Week</h4>
+            <p style="margin: 0; color: #666; font-size: 0.875rem;">Paste URLs to import recipes directly</p>
+        </div>
+        <a href="{{ url_for('planner.index') }}" class="btn btn-primary btn-sm">Start Planning</a>
+    </div>
+
+    <div class="quick-action hover-lift">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 0.25rem 0;">🛒 Shopping List</h4>
+            <p style="margin: 0; color: #666; font-size: 0.875rem;">Check off items as you shop</p>
+        </div>
+        <a href="{{ url_for('shopping.index') }}" class="btn btn-secondary btn-sm">Shop</a>
+    </div>
+    {% else %}
+    <div class="quick-action hover-lift">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 0.25rem 0;">👥 Create Household</h4>
+            <p style="margin: 0; color: #666; font-size: 0.875rem;">Invite family to plan together</p>
+        </div>
+        <a href="{{ url_for('household.create') }}" class="btn btn-primary btn-sm">Create</a>
+    </div>
+    {% endif %}
+
     <div class="quick-action hover-lift">
         <div style="flex: 1;">
             <h4 style="margin: 0 0 0.25rem 0;">📖 My Recipes</h4>
@@ -66,34 +93,10 @@
     {% if current_user.household %}
     <div class="quick-action hover-lift">
         <div style="flex: 1;">
-            <h4 style="margin: 0 0 0.25rem 0;">📅 This Week's Plan</h4>
-            <p style="margin: 0; color: #666; font-size: 0.875rem;">See what's cooking this week</p>
-        </div>
-        <a href="{{ url_for('planner.index') }}" class="btn btn-secondary btn-sm">Plan</a>
-    </div>
-
-    <div class="quick-action hover-lift">
-        <div style="flex: 1;">
-            <h4 style="margin: 0 0 0.25rem 0;">🛒 Shopping List</h4>
-            <p style="margin: 0; color: #666; font-size: 0.875rem;">Check off items as you shop</p>
-        </div>
-        <a href="{{ url_for('shopping.index') }}" class="btn btn-secondary btn-sm">Shop</a>
-    </div>
-
-    <div class="quick-action hover-lift">
-        <div style="flex: 1;">
             <h4 style="margin: 0 0 0.25rem 0;">★ Favorites</h4>
             <p style="margin: 0; color: #666; font-size: 0.875rem;">Your go-to recipes</p>
         </div>
         <a href="{{ url_for('meals.favorites') }}" class="btn btn-secondary btn-sm">View</a>
-    </div>
-    {% else %}
-    <div class="quick-action hover-lift">
-        <div style="flex: 1;">
-            <h4 style="margin: 0 0 0.25rem 0;">👥 Create Household</h4>
-            <p style="margin: 0; color: #666; font-size: 0.875rem;">Invite family to plan together</p>
-        </div>
-        <a href="{{ url_for('household.create') }}" class="btn btn-primary btn-sm">Create</a>
     </div>
     {% endif %}
 

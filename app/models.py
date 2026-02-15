@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import secrets
 
 db = SQLAlchemy()
 
@@ -51,6 +52,27 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
+class ApiKey(db.Model):
+    """API key for external integrations"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    key = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    name = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_used = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, default=True)
+
+    # Relationships
+    user = db.relationship('User', backref='api_keys')
+
+    @staticmethod
+    def generate_key():
+        """Generate a new API key"""
+        return secrets.token_urlsafe(48)
+
+    def __repr__(self):
+        return f'<ApiKey {self.name}>'
+
 class Meal(db.Model):
     """Meal/Recipe model"""
     id = db.Column(db.Integer, primary_key=True)
@@ -81,6 +103,7 @@ class MealPlan(db.Model):
     meal_type = db.Column(db.String(20), nullable=False)  # breakfast, lunch, dinner
     meal_id = db.Column(db.Integer, db.ForeignKey('meal.id'))
     custom_entry = db.Column(db.String(255))  # For "Leftovers", "Out to eat", etc.
+    source_url = db.Column(db.String(512))  # Tracks URL even if import fails
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

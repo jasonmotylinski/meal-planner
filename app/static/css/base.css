@@ -115,6 +115,12 @@ a:hover {
     text-decoration: underline;
 }
 
+/* Links styled as buttons should maintain button text color on hover */
+a.btn:hover {
+    color: inherit !important;
+    text-decoration: none;
+}
+
 small {
     font-size: 0.875rem;
     color: #666;

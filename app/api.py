@@ -1,14 +1,40 @@
 """
 Recipe API endpoints for external integrations
 Provides a discoverable interface for submitting recipe data
+Secured with API key authentication
 """
 
 from flask import Blueprint, request, jsonify
-from flask_login import login_required, current_user
-from app.models import db, Meal
+from functools import wraps
+from app.models import db, Meal, ApiKey, User
 from urllib.parse import urlparse
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/recipes')
+
+
+def require_api_key(f):
+    """Decorator to require API key authentication"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = request.headers.get('X-API-Key')
+
+        if not api_key:
+            return jsonify({"error": "Missing API key. Use X-API-Key header."}), 401
+
+        key = ApiKey.query.filter_by(key=api_key, is_active=True).first()
+        if not key:
+            return jsonify({"error": "Invalid API key"}), 401
+
+        # Update last_used timestamp
+        from datetime import datetime
+        key.last_used = datetime.utcnow()
+        db.session.commit()
+
+        # Add user to request context
+        request.api_user = key.user
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
 @api_bp.route('/schema', methods=['GET'])
@@ -67,7 +93,7 @@ def get_recipe_schema():
 
 
 @api_bp.route('', methods=['POST'])
-@login_required
+@require_api_key
 def create_recipe():
     """
     Create a new recipe via API
@@ -110,7 +136,7 @@ def create_recipe():
             image_filename=data.get('image_url'),  # Store URL directly
             source_url=source_url,
             source_name=source_name,
-            created_by=current_user.id
+            created_by=request.api_user.id
         )
 
         db.session.add(meal)
@@ -138,15 +164,15 @@ def create_recipe():
 
 
 @api_bp.route('/<int:recipe_id>', methods=['GET'])
-@login_required
+@require_api_key
 def get_recipe(recipe_id):
     """Get a specific recipe by ID"""
     meal = Meal.query.get(recipe_id)
     if not meal:
         return jsonify({"error": "Recipe not found"}), 404
 
-    # Check ownership or allow view if in same household
-    if meal.created_by != current_user.id and (not current_user.household or meal.creator.household_id != current_user.household_id):
+    # Check ownership
+    if meal.created_by != request.api_user.id:
         return jsonify({"error": "Access denied"}), 403
 
     return jsonify({
@@ -165,7 +191,7 @@ def get_recipe(recipe_id):
 
 
 @api_bp.route('/<int:recipe_id>', methods=['PUT', 'PATCH'])
-@login_required
+@require_api_key
 def update_recipe(recipe_id):
     """Update an existing recipe"""
     meal = Meal.query.get(recipe_id)
@@ -173,7 +199,7 @@ def update_recipe(recipe_id):
         return jsonify({"error": "Recipe not found"}), 404
 
     # Check ownership
-    if meal.created_by != current_user.id:
+    if meal.created_by != request.api_user.id:
         return jsonify({"error": "Access denied"}), 403
 
     try:
@@ -214,7 +240,7 @@ def update_recipe(recipe_id):
 
 
 @api_bp.route('/<int:recipe_id>', methods=['DELETE'])
-@login_required
+@require_api_key
 def delete_recipe(recipe_id):
     """Delete a recipe"""
     meal = Meal.query.get(recipe_id)
@@ -222,7 +248,7 @@ def delete_recipe(recipe_id):
         return jsonify({"error": "Recipe not found"}), 404
 
     # Check ownership
-    if meal.created_by != current_user.id:
+    if meal.created_by != request.api_user.id:
         return jsonify({"error": "Access denied"}), 403
 
     try:
@@ -241,12 +267,12 @@ def delete_recipe(recipe_id):
 
 
 @api_bp.route('', methods=['GET'])
-@login_required
+@require_api_key
 def list_recipes():
-    """List all recipes for the current user and their household"""
+    """List all recipes for the current user"""
     try:
-        # Get user's recipes and household recipes
-        user_recipes = Meal.query.filter_by(created_by=current_user.id)
+        # Get user's recipes
+        user_recipes = Meal.query.filter_by(created_by=request.api_user.id)
 
         recipes = []
         for meal in user_recipes:

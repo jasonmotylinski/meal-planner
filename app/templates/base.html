@@ -35,11 +35,6 @@
                             <span>🏠</span> Home
                         </a>
                     </li>
-                    <li>
-                        <a class="nav-link" href="{{ url_for('meals.library') }}">
-                            <span>📖</span> My Recipes
-                        </a>
-                    </li>
                     {% if current_user.household %}
                         <li>
                             <a class="nav-link" href="{{ url_for('planner.index') }}">
@@ -52,6 +47,11 @@
                             </a>
                         </li>
                     {% endif %}
+                    <li>
+                        <a class="nav-link" href="{{ url_for('meals.library') }}">
+                            <span>📖</span> My Recipes
+                        </a>
+                    </li>
                     <li class="nav-dropdown">
                         <button class="nav-dropdown-toggle" id="userDropdown" aria-label="User menu">
                             <span>👤</span> {{ current_user.username }}
@@ -60,6 +60,11 @@
                             <li>
                                 <a class="nav-dropdown-item" href="{{ url_for('household.index') }}">
                                     👥 Household
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-dropdown-item" href="{{ url_for('settings.api_keys') }}">
+                                    ⚙️ Settings
                                 </a>
                             </li>
                             <li>
