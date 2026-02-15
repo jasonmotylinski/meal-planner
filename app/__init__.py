@@ -1,7 +1,10 @@
 from flask import Flask, send_from_directory
 from flask_login import LoginManager
+from flask_migrate import Migrate
 from config import config
 import os
+
+migrate = Migrate()
 
 def create_app(config_name='development'):
     """Application factory"""
@@ -19,6 +22,7 @@ def create_app(config_name='development'):
     # Initialize extensions
     from app.models import db, User
     db.init_app(app)
+    migrate.init_app(app, db)
 
     login_manager = LoginManager()
     login_manager.init_app(app)
