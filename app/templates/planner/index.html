@@ -6,13 +6,11 @@
 <!-- Header -->
 <div class="planner-header">
     <div>
-        <h1 style="margin: 0 0 var(--spacing-xs) 0;">📅 This Week's Meals</h1>
-        <p style="color: #666; margin: 0;">Week of {{ week_start.strftime('%B %d, %Y') }}</p>
+        <h1 style="margin: 0;">📅 Meals for {{ week_start.strftime('%b %d') }} – {{ week_dates[-1].strftime('%b %d') }}</h1>
     </div>
     <div style="display: flex; gap: var(--spacing-sm);">
         <a href="{{ url_for('planner.index', week=prev_week.isoformat()) }}" class="btn btn-soft">← Previous</a>
         <a href="{{ url_for('planner.index', week=next_week.isoformat()) }}" class="btn btn-soft">Next →</a>
-        <a href="{{ url_for('shopping.create', week=week_start.isoformat()) }}" class="btn btn-primary">🛒 Shopping List</a>
     </div>
 </div>
 
