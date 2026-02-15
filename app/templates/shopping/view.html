@@ -30,6 +30,9 @@
         <form method="POST" action="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" style="display: none;">
             <button type="submit" class="btn btn-secondary">🔄 Generate from Meals</button>
         </form>
+        <form method="POST" action="{{ url_for('shopping.clear_list', id=shopping_list.id) }}" style="display: inline;" onsubmit="return confirm('Clear all items from this list? This cannot be undone.');">
+            <button type="submit" class="btn btn-outline" style="color: var(--terracotta); border-color: var(--terracotta);">🗑️ Clear List</button>
+        </form>
     </div>
     {% endif %}
 

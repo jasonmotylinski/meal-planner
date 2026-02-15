@@ -276,3 +276,25 @@ def add_ingredients():
         'message': f'Added {added_count} items to {shopping_list.store_name}',
         'shopping_list_id': shopping_list_id
     })
+
+@shopping_bp.route('/<int:id>/clear', methods=['POST'])
+@login_required
+def clear_list(id):
+    """Clear all items from a shopping list"""
+    if not current_user.household:
+        return redirect(url_for('household.create'))
+
+    shopping_list = ShoppingList.query.get_or_404(id)
+
+    # Verify permission
+    if shopping_list.household_id != current_user.household_id:
+        flash('Permission denied', 'danger')
+        return redirect(url_for('shopping.index'))
+
+    # Delete all items
+    item_count = len(shopping_list.items.all())
+    ShoppingListItem.query.filter_by(shopping_list_id=id).delete()
+    db.session.commit()
+
+    flash(f'Cleared {item_count} items from {shopping_list.store_name}', 'success')
+    return redirect(url_for('shopping.view', id=id))
