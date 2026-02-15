@@ -57,12 +57,17 @@
 
     <!-- Ingredients Section -->
     <section class="ingredients-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md); gap: var(--spacing-sm); flex-wrap: wrap;">
             <h4 style="margin: 0;">🥘 Ingredients</h4>
             {% if current_user.household %}
-                <button type="button" id="add-ingredients-btn" class="btn btn-sm btn-secondary" style="display: none;">
-                    ➕ Add Checked to Shopping List
-                </button>
+                <div style="display: flex; gap: var(--spacing-sm);">
+                    <button type="button" id="add-all-ingredients-btn" class="btn btn-sm btn-secondary" style="display: none;">
+                        ➕ Add All
+                    </button>
+                    <button type="button" id="add-ingredients-btn" class="btn btn-sm btn-secondary" style="display: none;">
+                        ➕ Add Checked to Shopping List
+                    </button>
+                </div>
             {% endif %}
         </div>
 
@@ -152,38 +157,73 @@ function updateAddButton() {
     }
 }
 
-// Handle "Add to Shopping List" button click
-const addIngredientsBtn = document.getElementById('add-ingredients-btn');
-if (addIngredientsBtn) {
-    addIngredientsBtn.addEventListener('click', showShoppingListModal);
+// Handle "Add All" button click
+const addAllBtn = document.getElementById('add-all-ingredients-btn');
+if (addAllBtn) {
+    addAllBtn.style.display = 'inline-block';
+    addAllBtn.addEventListener('click', function() {
+        const allIngredients = Array.from(
+            document.querySelectorAll('.ingredient-checkbox')
+        ).map(cb => cb.dataset.ingredient);
+
+        if (allIngredients.length === 0) {
+            alert('No ingredients to add');
+            return;
+        }
+
+        showShoppingListModal(allIngredients);
+    });
 }
 
-function showShoppingListModal() {
-    const checkedIngredients = Array.from(
+// Handle "Add Checked to Shopping List" button click
+const addIngredientsBtn = document.getElementById('add-ingredients-btn');
+if (addIngredientsBtn) {
+    addIngredientsBtn.addEventListener('click', function() {
+        const checkedIngredients = Array.from(
+            document.querySelectorAll('.ingredient-checkbox:checked')
+        ).map(cb => cb.dataset.ingredient);
+
+        showShoppingListModal(checkedIngredients);
+    });
+}
+
+function showShoppingListModal(ingredients) {
+    // Use provided ingredients or get checked ones
+    const ingredientsToAdd = ingredients || Array.from(
         document.querySelectorAll('.ingredient-checkbox:checked')
     ).map(cb => cb.dataset.ingredient);
 
-    if (checkedIngredients.length === 0) {
-        alert('Please check at least one ingredient');
+    if (ingredientsToAdd.length === 0) {
+        alert('No ingredients to add');
         return;
     }
 
     const modal = document.getElementById('shopping-list-modal');
     const container = document.getElementById('shopping-lists-container');
 
-    // Fetch all shopping lists via API
+    // Fetch all shopping lists via API (don't show modal yet)
     container.innerHTML = '<p style="text-align: center; color: #999;">Loading shopping lists...</p>';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
 
     fetch(`{{ url_for('shopping.get_shopping_lists') }}`)
         .then(r => r.json())
         .then(lists => {
-            renderShoppingListOptions(lists, checkedIngredients, container);
+            // Auto-select if only 1 list (don't show modal)
+            if (lists.length === 1) {
+                selectShoppingList(lists[0].id, lists[0].name, ingredientsToAdd);
+                return;
+            }
+
+            // Show modal only if multiple lists
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            renderShoppingListOptions(lists, ingredientsToAdd, container);
         })
         .catch(err => {
             container.innerHTML = '<p style="text-align: center; color: #c00;">Error loading shopping lists</p>';
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
             console.error(err);
         });
 }
