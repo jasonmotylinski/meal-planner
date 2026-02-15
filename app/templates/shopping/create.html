@@ -3,52 +3,40 @@
 {% block title %}Create Shopping List - Meal Planner{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Create Shopping List</h1>
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <p class="text-muted mb-4">Which store is this list for?</p>
-
-                <form method="POST">
-                    {{ form.hidden_tag() }}
-
-                    <div class="mb-4">
-                        {{ form.store_name.label(class="form-label") }}
-                        {% if form.store_name.errors %}
-                            {{ form.store_name(class="form-control is-invalid") }}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.store_name.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {{ form.store_name(class="form-control form-control-lg", placeholder="e.g., Stop & Shop, Costco, Trader Joe's") }}
-                        {% endif %}
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        {{ form.submit(class="btn btn-primary btn-lg") }}
-                        <a href="{{ url_for('shopping.index') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
-                    </div>
-                </form>
-            </div>
-        </div>
+<div style="max-width: 500px; margin: 0 auto; padding: var(--spacing-xl);">
+    <!-- Header -->
+    <div style="margin-bottom: var(--spacing-xl); text-align: center;">
+        <h1 style="margin: 0 0 var(--spacing-sm) 0;">🛒 Create Shopping List</h1>
+        <p style="color: #666; margin: 0;">Which store is this list for?</p>
     </div>
 
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Popular Stores</h5>
-            </div>
-            <div class="list-group list-group-flush">
-                <button class="list-group-item list-group-item-action text-start" onclick="document.querySelector('input[name=store_name]').value='Stop & Shop'; return false;">Stop & Shop</button>
-                <button class="list-group-item list-group-item-action text-start" onclick="document.querySelector('input[name=store_name]').value='Costco'; return false;">Costco</button>
-                <button class="list-group-item list-group-item-action text-start" onclick="document.querySelector('input[name=store_name]').value='Trader Joe'\''s'; return false;">Trader Joe's</button>
-                <button class="list-group-item list-group-item-action text-start" onclick="document.querySelector('input[name=store_name]').value='Whole Foods'; return false;">Whole Foods</button>
-                <button class="list-group-item list-group-item-action text-start" onclick="document.querySelector('input[name=store_name]').value='Local Market'; return false;">Local Market</button>
-            </div>
+    <!-- Form Card -->
+    <div class="card" style="margin-bottom: var(--spacing-xl);">
+        <div style="padding: var(--spacing-lg);">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+
+                <!-- Store Name Input -->
+                <div style="margin-bottom: var(--spacing-lg);">
+                    {{ form.store_name.label(style="display: block; margin-bottom: var(--spacing-sm); font-weight: 600; color: var(--charcoal);") }}
+                    {% if form.store_name.errors %}
+                        {{ form.store_name(class="form-control is-invalid", style="padding: 12px 16px; font-size: 1rem; border: 2px solid #dc3545; border-radius: var(--radius-md); width: 100%; box-sizing: border-box;") }}
+                        <div style="color: #dc3545; font-size: 0.875rem; margin-top: var(--spacing-sm);">
+                            {% for error in form.store_name.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.store_name(style="padding: 12px 16px; font-size: 1rem; border: 2px solid var(--sage-green); border-radius: var(--radius-md); width: 100%; box-sizing: border-box; transition: border-color 0.2s ease;", placeholder="e.g., Stop & Shop, Costco") }}
+                    {% endif %}
+                </div>
+
+<!-- Action Buttons -->
+                <div style="display: flex; gap: var(--spacing-sm); flex-direction: column;">
+                    {{ form.submit(class="btn btn-primary", style="width: 100%; padding: 12px; font-size: 1rem; font-weight: 600;") }}
+                    <a href="{{ url_for('shopping.index') }}" class="btn btn-soft" style="width: 100%; text-align: center; padding: 12px;">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
