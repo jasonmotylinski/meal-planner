@@ -27,34 +27,34 @@ def parse_ingredients(ingredients_text):
 @shopping_bp.route('/')
 @login_required
 def index():
-    """View shopping lists"""
+    """View all shopping lists for household"""
     if not current_user.household:
         return redirect(url_for('household.create'))
 
-    week_param = request.args.get('week', type=str)
-
-    if week_param:
-        try:
-            week_start = date.fromisoformat(week_param)
-        except (ValueError, AttributeError):
-            week_start = get_week_start()
-    else:
-        week_start = get_week_start()
-
+    # Get all shopping lists for this household (no week filtering)
     shopping_lists = ShoppingList.query.filter_by(
-        household_id=current_user.household_id,
-        week_start_date=week_start
-    ).all()
-
-    # Get next and previous week
-    prev_week = week_start - timedelta(days=7)
-    next_week = week_start + timedelta(days=7)
+        household_id=current_user.household_id
+    ).order_by(ShoppingList.created_at.desc()).all()
 
     return render_template('shopping/index.html',
-                         shopping_lists=shopping_lists,
-                         week_start=week_start,
-                         prev_week=prev_week,
-                         next_week=next_week)
+                         shopping_lists=shopping_lists)
+
+@shopping_bp.route('/api/lists', methods=['GET'])
+@login_required
+def get_shopping_lists():
+    """Get all shopping lists for household (API endpoint)"""
+    if not current_user.household:
+        return jsonify({'error': 'No household'}), 400
+
+    # Get all shopping lists (no week filtering)
+    shopping_lists = ShoppingList.query.filter_by(
+        household_id=current_user.household_id
+    ).order_by(ShoppingList.created_at.desc()).all()
+
+    return jsonify([{
+        'id': sl.id,
+        'name': sl.store_name
+    } for sl in shopping_lists])
 
 @shopping_bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -63,29 +63,19 @@ def create():
     if not current_user.household:
         return redirect(url_for('household.create'))
 
-    week_param = request.args.get('week', type=str)
-
-    if week_param:
-        try:
-            week_start = date.fromisoformat(week_param)
-        except (ValueError, AttributeError):
-            week_start = get_week_start()
-    else:
-        week_start = get_week_start()
-
     form = ShoppingListForm()
     if form.validate_on_submit():
         shopping_list = ShoppingList(
             household_id=current_user.household_id,
             store_name=form.store_name.data,
-            week_start_date=week_start
+            week_start_date=date.today()  # Just use today's date, doesn't affect filtering anymore
         )
         db.session.add(shopping_list)
         db.session.commit()
         flash(f'Shopping list "{form.store_name.data}" created!', 'success')
         return redirect(url_for('shopping.view', id=shopping_list.id))
 
-    return render_template('shopping/create.html', form=form, week_start=week_start)
+    return render_template('shopping/create.html', form=form)
 
 @shopping_bp.route('/<int:id>')
 @login_required
@@ -180,7 +170,7 @@ def toggle_item(item_id):
     item = ShoppingListItem.query.get_or_404(item_id)
     shopping_list = item.shopping_list
 
-    if shopping_list.user_id != current_user.id:
+    if not current_user.household or shopping_list.household_id != current_user.household_id:
         return jsonify({'error': 'Permission denied'}), 403
 
     item.is_checked = not item.is_checked
@@ -195,12 +185,16 @@ def delete_item(item_id):
     item = ShoppingListItem.query.get_or_404(item_id)
     shopping_list = item.shopping_list
 
-    if shopping_list.user_id != current_user.id:
+    if not current_user.household or shopping_list.household_id != current_user.household_id:
         return jsonify({'error': 'Permission denied'}), 403
 
     list_id = shopping_list.id
     db.session.delete(item)
     db.session.commit()
+
+    # Return JSON for AJAX requests, redirect for form submissions
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True, 'message': 'Item removed'})
 
     return redirect(url_for('shopping.view', id=list_id))
 
@@ -211,13 +205,13 @@ def move_item(item_id):
     item = ShoppingListItem.query.get_or_404(item_id)
     old_list = item.shopping_list
 
-    if old_list.user_id != current_user.id:
+    if not current_user.household or old_list.household_id != current_user.household_id:
         return jsonify({'error': 'Permission denied'}), 403
 
     target_list_id = request.form.get('target_list_id', type=int)
     target_list = ShoppingList.query.get_or_404(target_list_id)
 
-    if target_list.user_id != current_user.id:
+    if target_list.household_id != current_user.household_id:
         return jsonify({'error': 'Permission denied'}), 403
 
     item.shopping_list_id = target_list_id
@@ -240,3 +234,45 @@ def delete_list(id):
     db.session.commit()
     flash('Shopping list deleted', 'info')
     return redirect(url_for('shopping.index', week=shopping_list.week_start_date.isoformat()))
+
+@shopping_bp.route('/add-ingredients', methods=['POST'])
+@login_required
+def add_ingredients():
+    """Add selected ingredients from a meal to a shopping list"""
+    if not current_user.household:
+        return jsonify({'error': 'No household'}), 400
+
+    shopping_list_id = request.form.get('shopping_list_id', type=int)
+    ingredients = request.form.getlist('ingredients[]')
+
+    if not shopping_list_id or not ingredients:
+        return jsonify({'error': 'Missing shopping list or ingredients'}), 400
+
+    shopping_list = ShoppingList.query.get_or_404(shopping_list_id)
+
+    # Verify permission
+    if shopping_list.household_id != current_user.household_id:
+        return jsonify({'error': 'Permission denied'}), 403
+
+    # Add ingredients (avoid duplicates)
+    existing_items = {item.item_name.lower() for item in shopping_list.items}
+    added_count = 0
+
+    for ingredient in ingredients:
+        ingredient = ingredient.strip()
+        if ingredient and ingredient.lower() not in existing_items:
+            item = ShoppingListItem(
+                shopping_list_id=shopping_list_id,
+                item_name=ingredient
+            )
+            db.session.add(item)
+            existing_items.add(ingredient.lower())
+            added_count += 1
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': f'Added {added_count} items to {shopping_list.store_name}',
+        'shopping_list_id': shopping_list_id
+    })

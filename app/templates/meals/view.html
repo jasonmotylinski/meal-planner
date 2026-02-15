@@ -57,16 +57,41 @@
 
     <!-- Ingredients Section -->
     <section class="ingredients-section">
-        <h4>🥘 Ingredients</h4>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+            <h4 style="margin: 0;">🥘 Ingredients</h4>
+            {% if current_user.household %}
+                <button type="button" id="add-ingredients-btn" class="btn btn-sm btn-secondary" style="display: none;">
+                    ➕ Add Checked to Shopping List
+                </button>
+            {% endif %}
+        </div>
+
         <ul class="ingredient-list">
             {% for ingredient in meal.ingredients.split('\n') if ingredient.strip() %}
                 <li class="ingredient-item">
-                    <input type="checkbox" class="ingredient-checkbox" id="ingredient-{{ loop.index }}">
+                    <input type="checkbox" class="ingredient-checkbox" id="ingredient-{{ loop.index }}" data-ingredient="{{ ingredient.strip() }}">
                     <label for="ingredient-{{ loop.index }}" class="ingredient-text">{{ ingredient.strip() }}</label>
                 </li>
             {% endfor %}
         </ul>
     </section>
+
+    <!-- Modal for selecting shopping list -->
+    <div id="shopping-list-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: var(--radius-lg); padding: var(--spacing-lg); max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
+            <h3 style="margin-top: 0;">Add to Shopping List</h3>
+            <p style="color: #666; margin-bottom: var(--spacing-md);">Select which shopping list to add these items to:</p>
+
+            <div id="shopping-lists-container" style="margin-bottom: var(--spacing-lg); max-height: 300px; overflow-y: auto;">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <div style="display: flex; gap: var(--spacing-sm);">
+                <button type="button" id="modal-cancel-btn" class="btn btn-soft" style="flex: 1;">Cancel</button>
+                <button type="button" id="modal-confirm-btn" class="btn btn-primary" style="flex: 1;">Add Items</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Instructions Section -->
     <section class="instructions-section">
@@ -112,4 +137,144 @@
     </div>
 </section>
 {% endif %}
+
+<script>
+// Show/hide "Add to Shopping List" button when checkboxes are checked
+document.querySelectorAll('.ingredient-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateAddButton);
+});
+
+function updateAddButton() {
+    const checkedCount = document.querySelectorAll('.ingredient-checkbox:checked').length;
+    const addBtn = document.getElementById('add-ingredients-btn');
+    if (addBtn) {
+        addBtn.style.display = checkedCount > 0 ? 'inline-block' : 'none';
+    }
+}
+
+// Handle "Add to Shopping List" button click
+const addIngredientsBtn = document.getElementById('add-ingredients-btn');
+if (addIngredientsBtn) {
+    addIngredientsBtn.addEventListener('click', showShoppingListModal);
+}
+
+function showShoppingListModal() {
+    const checkedIngredients = Array.from(
+        document.querySelectorAll('.ingredient-checkbox:checked')
+    ).map(cb => cb.dataset.ingredient);
+
+    if (checkedIngredients.length === 0) {
+        alert('Please check at least one ingredient');
+        return;
+    }
+
+    const modal = document.getElementById('shopping-list-modal');
+    const container = document.getElementById('shopping-lists-container');
+
+    // Fetch all shopping lists via API
+    container.innerHTML = '<p style="text-align: center; color: #999;">Loading shopping lists...</p>';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+
+    fetch(`{{ url_for('shopping.get_shopping_lists') }}`)
+        .then(r => r.json())
+        .then(lists => {
+            renderShoppingListOptions(lists, checkedIngredients, container);
+        })
+        .catch(err => {
+            container.innerHTML = '<p style="text-align: center; color: #c00;">Error loading shopping lists</p>';
+            console.error(err);
+        });
+}
+
+function renderShoppingListOptions(lists, ingredients, container) {
+    if (lists.length === 0) {
+        container.innerHTML = `
+            <p style="text-align: center; color: #999; margin-bottom: var(--spacing-md);">
+                No shopping lists this week. <br>
+                <a href="{{ url_for('shopping.create') }}" style="color: var(--sage-green);">Create one first</a>
+            </p>
+        `;
+        return;
+    }
+
+    let html = '<div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">';
+    lists.forEach(list => {
+        html += `
+            <button type="button" class="shopping-list-option" onclick="selectShoppingList(${list.id}, '${list.name}', ${JSON.stringify(ingredients).replace(/"/g, '&quot;')})" style="
+                padding: var(--spacing-md);
+                text-align: left;
+                background: linear-gradient(135deg, var(--honey-gold) 0%, var(--terracotta) 100%);
+                color: white;
+                border: none;
+                border-radius: var(--radius-md);
+                cursor: pointer;
+                transition: all 0.2s ease;
+                font-weight: 500;
+            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                ${list.name}
+            </button>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function selectShoppingList(listId, listName, ingredients) {
+    // Create form data
+    const formData = new FormData();
+    formData.append('shopping_list_id', listId);
+    ingredients.forEach(ingredient => {
+        formData.append('ingredients[]', ingredient);
+    });
+
+    // Submit via AJAX and redirect to shopping list
+    fetch('{{ url_for("shopping.add_ingredients") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and redirect to shopping list
+            document.getElementById('shopping-list-modal').style.display = 'none';
+
+            // Show success toast
+            if (window.Toast) {
+                new Toast(`✓ Added ${ingredients.length} items to ${listName}!`, 'success', 3000);
+            }
+
+            // Redirect to shopping list after brief delay
+            setTimeout(() => {
+                window.location.href = `/shopping/${listId}`;
+            }, 500);
+        } else {
+            alert('Error adding ingredients: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error adding ingredients');
+    });
+}
+
+// Modal cancel button
+const modalCancelBtn = document.getElementById('modal-cancel-btn');
+if (modalCancelBtn) {
+    modalCancelBtn.addEventListener('click', function() {
+        document.getElementById('shopping-list-modal').style.display = 'none';
+    });
+}
+
+// Close modal when clicking outside
+document.getElementById('shopping-list-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.style.display = 'none';
+    }
+});
+</script>
 {% endblock %}

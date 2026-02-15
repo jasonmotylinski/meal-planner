@@ -9,7 +9,7 @@
     <div class="col-md-6">
         <div class="card shadow-sm">
             <div class="card-body">
-                <p class="text-muted mb-4">Which store will you shop at this week?</p>
+                <p class="text-muted mb-4">Which store is this list for?</p>
 
                 <form method="POST">
                     {{ form.hidden_tag() }}
@@ -30,7 +30,7 @@
 
                     <div class="d-grid gap-2">
                         {{ form.submit(class="btn btn-primary btn-lg") }}
-                        <a href="{{ url_for('shopping.index', week=week_start.isoformat()) }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                        <a href="{{ url_for('shopping.index') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
                     </div>
                 </form>
             </div>

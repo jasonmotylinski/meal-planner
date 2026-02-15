@@ -7,12 +7,9 @@
     <!-- Header -->
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-lg); gap: var(--spacing-md);">
         <div>
-            <h1 style="margin: 0 0 var(--spacing-xs) 0;">🛒 {{ shopping_list.store_name }}</h1>
-            <p style="color: #666; margin: 0; font-size: 0.875rem;">
-                Week of {{ shopping_list.week_start_date.strftime('%B %d, %Y') }}
-            </p>
+            <h1 style="margin: 0;">🛒 {{ shopping_list.store_name }}</h1>
         </div>
-        <a href="{{ url_for('shopping.index', week=shopping_list.week_start_date.isoformat()) }}" class="btn btn-soft" style="white-space: nowrap;">← Back</a>
+        <a href="{{ url_for('shopping.index') }}" class="btn btn-soft" style="white-space: nowrap;">← Back</a>
     </div>
 
     <!-- Progress Bar -->
@@ -29,7 +26,9 @@
     {% if items %}
     <div style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg); flex-wrap: wrap;">
         <a href="{{ url_for('shopping.add_item', id=shopping_list.id) }}" class="btn btn-primary">➕ Add Item</a>
-        <a href="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" class="btn btn-secondary">🔄 Generate from Meals</a>
+        <form method="POST" action="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" style="display: inline;">
+            <button type="submit" class="btn btn-secondary">🔄 Generate from Meals</button>
+        </form>
     </div>
     {% endif %}
 
@@ -37,15 +36,25 @@
     {% if items %}
         <div class="shopping-items">
             {% for item in items %}
-                <div class="shopping-item {% if item.is_checked %}checked{% endif %}">
-                    <input type="checkbox"
-                           class="shopping-checkbox"
-                           data-item-id="{{ item.id }}"
-                           {% if item.is_checked %}checked{% endif %}>
-                    <span class="item-text">{{ item.item_name }}</span>
-                    {% if item.quantity %}
-                        <span class="item-quantity">{{ item.quantity }}{% if item.unit %} {{ item.unit }}{% endif %}</span>
-                    {% endif %}
+                <div class="shopping-item {% if item.is_checked %}checked{% endif %}" style="display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md); background: white; border: 1px solid var(--light-gray); border-radius: var(--radius-md); margin-bottom: var(--spacing-sm); transition: all 0.2s ease;">
+                    <div style="display: flex; align-items: center; flex: 1; gap: var(--spacing-sm);">
+                        <input type="checkbox"
+                               class="shopping-checkbox"
+                               data-item-id="{{ item.id }}"
+                               {% if item.is_checked %}checked{% endif %}>
+                        <span class="item-text">{{ item.item_name }}</span>
+                        {% if item.quantity %}
+                            <span class="item-quantity">{{ item.quantity }}{% if item.unit %} {{ item.unit }}{% endif %}</span>
+                        {% endif %}
+                    </div>
+                    <button type="button" class="delete-item-btn"
+                            onclick="deleteItem({{ item.id }}, event)"
+                            style="background: none; border: none; color: var(--terracotta); cursor: pointer; padding: 0.25rem 0.5rem; font-size: 1.25rem; transition: all 0.2s ease; opacity: 0.6;"
+                            onmouseover="this.style.opacity='1'"
+                            onmouseout="this.style.opacity='0.6'"
+                            title="Delete item">
+                        ✕
+                    </button>
                 </div>
             {% endfor %}
         </div>
@@ -67,7 +76,9 @@
             <p>Add items to your shopping list or generate them from your planned meals.</p>
             <div style="display: flex; gap: var(--spacing-md); justify-content: center; flex-wrap: wrap;">
                 <a href="{{ url_for('shopping.add_item', id=shopping_list.id) }}" class="btn btn-primary">Add Item</a>
-                <a href="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" class="btn btn-secondary">Generate from Meals</a>
+                <form method="POST" action="{{ url_for('shopping.generate_from_meals', id=shopping_list.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-secondary">Generate from Meals</button>
+                </form>
             </div>
         </div>
     {% endif %}

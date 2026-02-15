@@ -202,4 +202,59 @@ function createShoppingItemElement(item) {
     return li;
 }
 
+/**
+ * Delete shopping item
+ */
+function deleteItem(itemId, event) {
+    event.preventDefault();
+
+    if (!confirm('Remove this item from the list?')) {
+        return;
+    }
+
+    const shoppingItem = event.target.closest('.shopping-item');
+
+    // Optimistic UI update - fade out
+    shoppingItem.style.opacity = '0.5';
+    shoppingItem.style.pointerEvents = 'none';
+
+    // AJAX request to delete on server
+    fetch(`/shopping/item/${itemId}/delete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Animate removal
+            shoppingItem.style.transform = 'translateX(100%)';
+            shoppingItem.style.transition = 'all 0.3s ease';
+
+            setTimeout(() => {
+                shoppingItem.remove();
+                updateProgressBar();
+                new Toast('Item removed', 'success');
+            }, 300);
+        } else {
+            // Revert on failure
+            shoppingItem.style.opacity = '1';
+            shoppingItem.style.pointerEvents = 'auto';
+            new Toast(data.message || 'Failed to remove item', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revert on error
+        shoppingItem.style.opacity = '1';
+        shoppingItem.style.pointerEvents = 'auto';
+        new Toast('Error removing item', 'danger');
+    });
+}
+
 console.log('✓ Shopping.js loaded');
