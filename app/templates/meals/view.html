@@ -3,6 +3,8 @@
 {% block title %}{{ meal.name }} - Meal Planner{% endblock %}
 
 {% block content %}
+<a href="{{ url_for('meals.library') }}" class="btn btn-soft" style="white-space: nowrap; margin-bottom: var(--spacing-md);">← Back</a>
+
 <div class="meal-detail">
     <!-- Header -->
     <div class="meal-header">
@@ -114,12 +116,6 @@
         </div>
     </section>
 
-    <!-- Back Link -->
-    <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--light-gray);">
-        <a href="{{ url_for('meals.library') }}" style="color: var(--sage-green); text-decoration: none; font-weight: 500;">
-            ← Back to Recipe Collection
-        </a>
-    </div>
 </div>
 
 <!-- Quick Add to Meal Plan Section -->

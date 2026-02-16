@@ -9,7 +9,7 @@
     <div class="col-md-8">
         <div class="card shadow-sm">
             <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST">
                     {{ form.hidden_tag() }}
 
                     <!-- Name -->
@@ -94,24 +94,28 @@
                         <div class="mb-3">
                             <label class="form-label">Current Image</label>
                             <div class="mb-2">
-                                <img src="{{ url_for('static', filename='uploads/' + meal.image_filename) }}" style="max-width: 200px; border-radius: 4px;">
+                                {% if meal.image_filename.startswith('http') %}
+                                    <img src="{{ meal.image_filename }}" style="max-width: 200px; border-radius: 4px;">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='uploads/' + meal.image_filename) }}" style="max-width: 200px; border-radius: 4px;">
+                                {% endif %}
                             </div>
                         </div>
                     {% endif %}
 
-                    <!-- Image -->
-                    <div class="mb-4">
-                        {{ form.image.label(class="form-label") }}
-                        <div class="input-group">
-                            {{ form.image(class="form-control") }}
-                        </div>
-                        <small class="text-muted">Leave blank to keep current image</small>
-                        {% if form.image.errors %}
+                    <!-- Image URL -->
+                    <div class="mb-3">
+                        {{ form.image_url.label(class="form-label") }}
+                        <small class="d-block text-muted mb-2">Leave blank to keep current image</small>
+                        {% if form.image_url.errors %}
+                            {{ form.image_url(class="form-control is-invalid", placeholder="https://example.com/image.jpg") }}
                             <div class="invalid-feedback d-block">
-                                {% for error in form.image.errors %}
+                                {% for error in form.image_url.errors %}
                                     <span>{{ error }}</span>
                                 {% endfor %}
                             </div>
+                        {% else %}
+                            {{ form.image_url(class="form-control", placeholder="https://example.com/image.jpg") }}
                         {% endif %}
                     </div>
 

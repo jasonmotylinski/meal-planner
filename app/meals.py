@@ -191,9 +191,8 @@ def edit(id):
         meal.ingredients = form.ingredients.data
         meal.instructions = form.instructions.data
 
-        if form.image.data:
-            delete_picture(meal.image_filename)
-            meal.image_filename = save_picture(form.image.data)
+        if form.image_url.data:
+            meal.image_filename = form.image_url.data
 
         db.session.commit()
         flash('Meal updated successfully!', 'success')
@@ -205,6 +204,8 @@ def edit(id):
         form.category.data = meal.category or ''
         form.ingredients.data = meal.ingredients
         form.instructions.data = meal.instructions
+        if meal.image_filename and meal.image_filename.startswith('http'):
+            form.image_url.data = meal.image_filename
 
     return render_template('meals/edit.html', form=form, meal=meal)
 

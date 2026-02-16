@@ -82,6 +82,7 @@ class MealForm(FlaskForm):
     image = FileField('Recipe Image', validators=[
         FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only (.jpg, .jpeg, .png, .gif)')
     ])
+    image_url = URLField('Image URL', validators=[Optional(), URL(message='Please enter a valid URL')])
     submit = SubmitField('Save Meal')
 
 class MealPlanForm(FlaskForm):
