@@ -10,7 +10,7 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    border: none;
+    border: 2px solid transparent;
     border-radius: var(--radius-md);
     font-family: var(--font-body);
     font-weight: 600;
@@ -19,6 +19,7 @@
     transition: all 0.2s ease;
     text-decoration: none;
     white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .btn:disabled {
@@ -31,7 +32,6 @@
     background: linear-gradient(135deg, var(--terracotta) 0%, #d86b52 100%);
     color: var(--white);
     box-shadow: 0 2px 8px rgba(224, 122, 95, 0.3);
-    border: 2px solid transparent;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -75,12 +75,25 @@
 .btn-soft {
     background-color: rgba(135, 168, 120, 0.1);
     color: var(--sage-green);
-    border: 1px solid rgba(135, 168, 120, 0.3);
+    border: 2px solid rgba(135, 168, 120, 0.3);
 }
 
 .btn-soft:hover:not(:disabled) {
     background-color: rgba(135, 168, 120, 0.2);
     border-color: var(--sage-green);
+}
+
+/* Delete Button */
+.btn-delete {
+    background-color: transparent;
+    color: var(--terracotta);
+    border: 2px solid var(--terracotta);
+}
+
+.btn-delete:hover:not(:disabled) {
+    background-color: var(--terracotta);
+    color: var(--white);
+    transform: translateY(-2px);
 }
 
 /* Small Button */

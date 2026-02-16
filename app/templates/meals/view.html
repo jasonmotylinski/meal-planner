@@ -30,17 +30,21 @@
             {% endif %}
 
             <div class="meal-actions">
+                <div class="meal-actions-primary">
+                    {% if is_owner %}
+                        <a href="{{ url_for('meals.edit', id=meal.id) }}" class="btn btn-soft">✏️ Edit Recipe</a>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('meals.toggle_favorite', id=meal.id) }}" class="meal-actions-form">
+                        <button type="submit" class="btn btn-soft">
+                            {% if is_favorite %}★{% else %}☆{% endif %} {{ 'Favorited' if is_favorite else 'Add to Favorites' }}
+                        </button>
+                    </form>
+                </div>
                 {% if is_owner %}
-                    <a href="{{ url_for('meals.edit', id=meal.id) }}" class="btn btn-secondary">✏️ Edit Recipe</a>
-                    <form method="POST" action="{{ url_for('meals.delete', id=meal.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure? This can\'t be undone.');">
-                        <button type="submit" class="btn btn-outline" style="color: var(--terracotta); border-color: var(--terracotta);">🗑️ Delete</button>
+                    <form method="POST" action="{{ url_for('meals.delete', id=meal.id) }}" class="meal-actions-delete" onsubmit="return confirm('Are you sure? This can\'t be undone.');">
+                        <button type="submit" class="btn btn-delete">🗑️ Delete</button>
                     </form>
                 {% endif %}
-                <form method="POST" action="{{ url_for('meals.toggle_favorite', id=meal.id) }}" style="display: inline;">
-                    <button type="submit" class="btn {% if is_favorite %}btn-secondary{% else %}btn-soft{% endif %}">
-                        {% if is_favorite %}★{% else %}☆{% endif %} {{ 'Favorited' if is_favorite else 'Add to Favorites' }}
-                    </button>
-                </form>
             </div>
 
             <small style="color: #888;">
@@ -61,10 +65,10 @@
             <h4 style="margin: 0;">🥘 Ingredients</h4>
             {% if current_user.household %}
                 <div style="display: flex; gap: var(--spacing-sm);">
-                    <button type="button" id="add-all-ingredients-btn" class="btn btn-sm btn-secondary" style="display: none;">
+                    <button type="button" id="add-all-ingredients-btn" class="btn btn-sm btn-soft" style="display: none;">
                         ➕ Add All
                     </button>
-                    <button type="button" id="add-ingredients-btn" class="btn btn-sm btn-secondary" style="display: none;">
+                    <button type="button" id="add-ingredients-btn" class="btn btn-sm btn-soft" style="display: none;">
                         ➕ Add Checked to Shopping List
                     </button>
                 </div>

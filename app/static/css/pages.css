@@ -401,6 +401,33 @@ footer p {
     display: flex;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
+    align-items: center;
+    justify-content: space-between;
+}
+
+.meal-actions-primary {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    flex: 1;
+    align-items: stretch;
+}
+
+.meal-actions-form {
+    display: flex;
+}
+
+.meal-actions-form .btn {
+    flex: 1;
+}
+
+.meal-actions-delete {
+    display: flex;
+    flex-shrink: 0;
+}
+
+.meal-actions-delete .btn {
+    flex: 1;
 }
 
 .ingredients-section,
@@ -738,6 +765,38 @@ footer p {
     .form-actions .btn {
         width: 100%;
     }
+
+    /* Meal actions on tablet */
+    .meal-actions {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+
+    .meal-actions-primary {
+        gap: var(--spacing-xs);
+    }
+
+    .meal-actions-primary .btn {
+        font-size: 0.95rem;
+    }
+
+    /* Stack header and buttons vertically on tablet */
+    .flex-between {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .flex-between > div:last-child {
+        width: 100%;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: var(--spacing-sm) !important;
+        margin-top: var(--spacing-md);
+    }
+
+    .flex-between > div:last-child > a {
+        width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
@@ -760,6 +819,36 @@ footer p {
 
     .recipe-card {
         height: 200px;
+    }
+
+    /* Meal actions on small phones */
+    .meal-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+    }
+
+    .meal-actions-primary {
+        flex-direction: column;
+        width: 100%;
+        gap: var(--spacing-sm);
+    }
+
+    .meal-actions-primary .btn,
+    .meal-actions-delete .btn {
+        width: 100%;
+    }
+
+    .meal-actions-primary .meal-actions-form {
+        width: 100%;
+    }
+
+    .meal-actions-primary .meal-actions-form .btn {
+        width: 100%;
+    }
+
+    .meal-actions-delete {
+        width: 100%;
     }
 
     /* Quick Add buttons - stack in 2 columns on small phones */
