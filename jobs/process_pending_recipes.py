@@ -147,8 +147,8 @@ def process_pending_recipes():
             logger.error("ANTHROPIC_API_KEY not found in config")
             return False
 
-        # Find all pending and failed imports (retry failed ones)
-        pending = MealPlan.query.filter(MealPlan.import_status.in_(['pending', 'failed'])).all()
+        # Find all pending imports (failed ones are not retried)
+        pending = MealPlan.query.filter(MealPlan.import_status == 'pending').all()
 
         if not pending:
             logger.info("No pending recipes to process")
