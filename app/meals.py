@@ -88,8 +88,6 @@ def create():
 @login_required
 def import_recipe():
     """Import a recipe from a URL"""
-    from app.models import MealPlan
-
     form = RecipeImportForm()
 
     if form.validate_on_submit():
@@ -126,22 +124,19 @@ def import_recipe():
                 flash('✨ Recipe imported successfully!', 'success')
                 return redirect(url_for('meals.view', id=meal.id))
             else:
-                # FAILURE: No schema.org data, queue for async Claude processing
+                # FAILURE: No schema.org data — create a placeholder Meal in the library
+                # so the background job can fill in details later without polluting the planner
                 domain = extract_domain_name(url)
 
-                # Queue for async processing via MealPlan (background job will create the Meal)
-                # Don't create a placeholder - let the background job create the complete Meal
-                from datetime import date
-                pending_plan = MealPlan(
-                    household_id=current_user.household_id,
-                    date=date.today(),
-                    meal_type='dinner',
+                meal = Meal(
+                    name=f'Recipe from {domain}',
+                    description='',
                     source_url=url,
-                    import_status='pending',
-                    custom_entry=f'From {domain}'
+                    source_name=domain,
+                    household_id=current_user.household_id,
+                    created_by=current_user.id
                 )
-
-                db.session.add(pending_plan)
+                db.session.add(meal)
                 db.session.commit()
 
                 flash(f'⏳ Recipe from {domain} saved! We\'re importing the details and will add it to your library shortly.', 'info')
