@@ -162,13 +162,12 @@ def view(id):
 
     meal = Meal.query.filter_by(id=id, household_id=current_user.household_id).first_or_404()
     is_favorite = current_user.favorites.filter(meal_favorites.c.meal_id == id).first() is not None
-    is_owner = meal.created_by == current_user.id
 
     # Get today's date and next 7 days for meal planning
     today = date.today()
     week_dates = [today + timedelta(days=i) for i in range(7)]
 
-    return render_template('meals/view.html', meal=meal, is_favorite=is_favorite, is_owner=is_owner,
+    return render_template('meals/view.html', meal=meal, is_favorite=is_favorite,
                          today=today, week_dates=week_dates)
 
 @meals_bp.route('/<int:id>/edit', methods=['GET', 'POST'])
@@ -179,9 +178,6 @@ def edit(id):
         return redirect(url_for('household.create'))
 
     meal = Meal.query.filter_by(id=id, household_id=current_user.household_id).first_or_404()
-
-    if meal.created_by != current_user.id:
-        abort(403)
 
     form = MealForm()
     if form.validate_on_submit():
@@ -217,9 +213,6 @@ def delete(id):
         return redirect(url_for('household.create'))
 
     meal = Meal.query.filter_by(id=id, household_id=current_user.household_id).first_or_404()
-
-    if meal.created_by != current_user.id:
-        abort(403)
 
     delete_picture(meal.image_filename)
     db.session.delete(meal)

@@ -33,7 +33,7 @@
 
             <div class="meal-actions">
                 <div class="meal-actions-primary">
-                    {% if is_owner %}
+                    {% if current_user.household_id == meal.household_id %}
                         <a href="{{ url_for('meals.edit', id=meal.id) }}" class="btn btn-soft">✏️ Edit Recipe</a>
                     {% endif %}
                     <form method="POST" action="{{ url_for('meals.toggle_favorite', id=meal.id) }}" class="meal-actions-form">
@@ -42,7 +42,7 @@
                         </button>
                     </form>
                 </div>
-                {% if is_owner %}
+                {% if current_user.household_id == meal.household_id %}
                     <form method="POST" action="{{ url_for('meals.delete', id=meal.id) }}" class="meal-actions-delete" onsubmit="return confirm('Are you sure? This can\'t be undone.');">
                         <button type="submit" class="btn btn-delete">🗑️ Delete</button>
                     </form>

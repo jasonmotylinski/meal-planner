@@ -56,22 +56,6 @@ meal-planner/
 └── README.md
 ```
 
-## Features (Phase 1)
-
-- ✅ User registration and login
-- ✅ Secure password hashing
-- ✅ Responsive design (mobile-friendly)
-- ✅ User authentication with Flask-Login
-- ✅ SQLite database with SQLAlchemy ORM
-
-## Next Steps
-
-- Phase 2: Meal library with CRUD operations
-- Phase 3: Weekly meal planning interface
-- Phase 4: Shopping list generation
-- Phase 5: Collaboration features
-- Phase 6: Testing & deployment
-
 ## Development Notes
 
 - The app uses SQLite for the database (suitable for development)
