@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app.models import User, db
 from app.forms import RegistrationForm, LoginForm
@@ -32,7 +32,8 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
-            login_user(user)
+            session.permanent = True
+            login_user(user, remember=True)
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('main.index'))
         else:
