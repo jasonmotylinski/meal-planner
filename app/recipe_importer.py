@@ -19,31 +19,42 @@ def extract_domain_name(url):
         return 'unknown'
 
 
+def _is_recipe_type(type_value):
+    """Check if a @type value indicates a Recipe (handles string or list)"""
+    if isinstance(type_value, list):
+        return 'Recipe' in type_value
+    return type_value == 'Recipe'
+
+
 def extract_structured_data(html):
     """
     Extract recipe from JSON-LD structured data (schema.org)
     Returns dict with recipe data or None if not found
     """
     try:
-        # Find all JSON-LD blocks
-        pattern = r'<script type="application/ld\+json">(.+?)</script>'
+        # Allow any attributes on the script tag (e.g. id="schema-unified-0")
+        pattern = r'<script[^>]+type="application/ld\+json"[^>]*>(.+?)</script>'
         matches = re.findall(pattern, html, re.DOTALL)
 
         for match in matches:
             try:
                 data = json.loads(match.strip())
 
-                # Check if it's a Recipe
                 recipe = None
                 if isinstance(data, dict):
-                    if data.get('@type') == 'Recipe':
+                    if _is_recipe_type(data.get('@type')):
                         recipe = data
                     elif '@graph' in data:
-                        # Look for Recipe in @graph
                         for item in data['@graph']:
-                            if item.get('@type') == 'Recipe':
+                            if isinstance(item, dict) and _is_recipe_type(item.get('@type')):
                                 recipe = item
                                 break
+                elif isinstance(data, list):
+                    # JSON-LD can be a top-level array
+                    for item in data:
+                        if isinstance(item, dict) and _is_recipe_type(item.get('@type')):
+                            recipe = item
+                            break
 
                 if recipe:
                     return _parse_recipe_schema(recipe)
