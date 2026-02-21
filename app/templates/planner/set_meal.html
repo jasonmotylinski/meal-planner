@@ -198,10 +198,11 @@
 
 <script>
 function selectMeal(mealId, mealName) {
-    document.querySelector('select[name="meal_id"]').value = mealId;
-    document.querySelector('input[name="url"]').value = '';
+    var form = document.querySelector('form');
+    form.querySelector('select[name="meal_id"]').value = mealId;
+    form.querySelector('input[name="url"]').value = '';
     document.querySelector('#search-results').style.display = 'none';
-    document.querySelector('form').submit();
+    HTMLFormElement.prototype.submit.call(form);
 }
 
 function selectQuickMeal(event, mealId, mealName) {
