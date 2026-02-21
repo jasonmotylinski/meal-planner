@@ -78,7 +78,7 @@
         </div>
 
         <ul class="ingredient-list">
-            {% for ingredient in meal.ingredients.split('\n') if ingredient.strip() %}
+            {% for ingredient in (meal.ingredients or '').split('\n') if ingredient.strip() %}
                 <li class="ingredient-item">
                     <input type="checkbox" class="ingredient-checkbox" id="ingredient-{{ loop.index }}" data-ingredient="{{ ingredient.strip() }}">
                     <label for="ingredient-{{ loop.index }}" class="ingredient-text">{{ ingredient.strip() }}</label>
@@ -108,7 +108,7 @@
     <section class="instructions-section">
         <h4>👨‍🍳 Instructions</h4>
         <div class="instructions">
-            {%- for instruction in meal.instructions.split('\n') if instruction.strip() -%}
+            {%- for instruction in (meal.instructions or '').split('\n') if instruction.strip() -%}
 {{ loop.index }}. {{ instruction.strip() }}
 {% if not loop.last %}
 {% endif %}
