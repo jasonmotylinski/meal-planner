@@ -164,8 +164,13 @@
 }
 
 .meal-search-result {
+    display: block;
+    width: 100%;
     padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
     border-bottom: 1px solid var(--light-gray);
+    background: white;
+    text-align: left;
     cursor: pointer;
     transition: background 0.2s ease;
 }
@@ -192,13 +197,16 @@
 </style>
 
 <script>
+function selectMeal(mealId, mealName) {
+    document.querySelector('select[name="meal_id"]').value = mealId;
+    document.querySelector('input[name="url"]').value = '';
+    document.querySelector('#search-results').style.display = 'none';
+    document.querySelector('form').submit();
+}
+
 function selectQuickMeal(event, mealId, mealName) {
     event.preventDefault();
-    document.querySelector('select[name="meal_id"]').value = mealId;
-    document.querySelector('#meal-search').value = mealName;
-    document.querySelector('#search-results').style.display = 'none';
-    // Clear the URL field if it was filled
-    document.querySelector('input[name="url"]').value = '';
+    selectMeal(mealId, mealName);
 }
 
 function searchMeals(query) {
@@ -220,11 +228,19 @@ function searchMeals(query) {
                 `;
             } else {
                 resultsDiv.innerHTML = meals.map(meal => `
-                    <div class="meal-search-result" onclick="selectQuickMeal(event, ${meal.id}, '${meal.name}')">
+                    <button type="button" class="meal-search-result"
+                            data-meal-id="${meal.id}"
+                            data-meal-name="${meal.name.replace(/"/g, '&quot;')}">
                         <div class="meal-result-name">${meal.name}</div>
                         <div class="meal-result-meta">${meal.category}</div>
-                    </div>
+                    </button>
                 `).join('');
+
+                resultsDiv.querySelectorAll('.meal-search-result').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        selectMeal(this.dataset.mealId, this.dataset.mealName);
+                    });
+                });
             }
             resultsDiv.style.display = 'block';
         });
